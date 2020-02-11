@@ -1,71 +1,90 @@
 package software.graphql.client
 
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.jvm.isAccessible
+fun query(vararg arguments: Argument, init: Query.() -> Unit) = Query(arguments).apply(init)
 
-fun query(init: Query.() -> Unit) = Query().apply(init)
+class Query() : NamedField() {
+    init {
+        fieldName = "query"
+    }
 
-class Query : Type("query") {
-    fun <T : Type> initRoot(node: T, init: T.() -> Unit) = initField(node, init)
-    fun <T : ScalarType> initRoot(node: T) = initField(node) // Maybe don't need
+    constructor(arguments: Array<out Argument>) : this() {
+        this.arguments = arguments
+    }
+
+    fun <T : NamedField> initRoot(name: String, node: T, vararg arguments: Argument, init: T.() -> Unit) =
+        initField(name, node, *arguments, init = init)
+
+    fun <T : ScalarField> initRoot(name: String, node: T, vararg arguments: Argument) =
+        initField(name, node, *arguments)
 }
 
-interface IType {
+interface Field {
     fun render(builder: StringBuilder, indent: String)
+
+    fun <K> MutableMap<K, in String>.enquoteStrings() =
+        this.apply {
+            this.forEach { (key, value) ->
+                if (value is String)
+                    this[key] = "\"$value\""
+            }
+        }
 }
 
 @DslMarker
 annotation class TypeMarker
 
 @TypeMarker
-abstract class Type(val typeName: String) : IType {
-    private val fields = arrayListOf<Type>()
+abstract class NamedField : Field {
+    protected lateinit var fieldName: String
+    private val fields = arrayListOf<NamedField>()
+    protected lateinit var arguments: Array<out Argument>
 
-    protected fun <T : Type> initField(node: T, init: T.() -> Unit) {
+    protected fun <T : NamedField> initField(
+        name: String,
+        node: T,
+        vararg arguments: Argument,
+        init: T.() -> Unit
+    ) {
+        node.fieldName = name
+        node.arguments = arguments
         node.init()
         fields.add(node)
     }
 
-    protected fun <T : ScalarType> initField(node: T) {
+    protected fun <T : ScalarField> initField(
+        name: String, node: T,
+        vararg arguments: Argument
+    ) {
+        node.fieldName = name
+        node.arguments = arguments
         fields.add(node)
     }
 
     override fun render(builder: StringBuilder, indent: String) {
-        builder.append("$indent$typeName${renderArguments()} {\n")
+        builder.append("$indent$fieldName${renderArguments()} {\n")
         for (c in fields)
             c.render(builder, "$indent  ")
 
         builder.append("$indent}\n")
     }
 
-    protected fun renderArguments(): String {
-        val builder = StringBuilder()
-
-        val arguments = this::class.declaredMemberProperties
-        val valueMap = hashMapOf<String, Any>()
-
-        arguments.forEach { argument ->
-            argument.getter.isAccessible = true
-            argument.getter.call(this).takeIf { it != null }?.apply {
-                if (this is String)
-                    valueMap[argument.name] = "\"$this\""
-                else
-                    valueMap[argument.name] = this
-            }
-        }
-
-        if (valueMap.isEmpty()) return ""
-
-        builder.append(valueMap.entries
-            .joinToString(prefix = "(", postfix = ")") { "${it.key}=${it.value}" })
-        return builder.toString()
-    }
+    fun renderArguments() =
+        arguments.map(Argument::toString).filter { it.isNotEmpty() }
+            .joinToString(prefix = "(", postfix = ")") { it }
 
     override fun toString() = StringBuilder().apply { render(this, "") }.toString()
 }
 
-open class ScalarType(name: String) : Type(name) {
+open class ScalarField : NamedField() {
     override fun render(builder: StringBuilder, indent: String) {
-        builder.append("$indent$typeName${renderArguments()}\n")
+        builder.append("$indent$fieldName${renderArguments()}\n")
+    }
+}
+
+data class Argument(val name: String, val value: Any?, var defaultValue: Any? = null) {
+    override fun toString() = when (value) {
+        defaultValue -> ""
+        is String -> "$name=\"$value\""
+        else -> "$name=$value"
     }
 }

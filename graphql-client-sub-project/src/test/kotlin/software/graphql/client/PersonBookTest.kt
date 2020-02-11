@@ -4,7 +4,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
- * This class defines following schema (it does not really define types of scalar fields):
+ * This class builds a query for schema like this:
  * <code>
  *     type Query {
  *         person(name: String!, age: Integer): Person
@@ -22,53 +22,70 @@ import kotlin.test.assertEquals
  * </code>
  */
 internal class PersonBookTest {
-    fun Query.person(name: String, age: Int? = null, init: Person.() -> Unit) =
-        initRoot(Person(name, age), init)
+    private fun Query.person(name: String, age: Int? = null, init: Person.() -> Unit) =
+        initRoot("person", Person(), Argument("name", name), Argument("age", age, null), init = init)
 
-    fun Query.book(authorName: String? = null, title: String? = null, init: Book.() -> Unit) =
-        initRoot(Book(authorName = authorName, title = title), init)
+    private fun Query.book(authorName: String? = "Boris", title: String? = null, init: Book.() -> Unit) =
+        initRoot(
+            "book", Book(),
+            Argument("authorName", authorName, "Boris"),
+            Argument("title", title, null),
+            init = init
+        )
 
-    class Person(private val name: String? = null, private val age: Int? = null) : Type("Person") {
-        fun book(title: String, init: Book.() -> Unit) = initField(Book(title = title), init)
-        fun name(capitalize: Boolean = false) = initField(PersonName(capitalize))
-        fun age() = initField(PersonAge())
+    private fun Query.schemaVersion() = initRoot("schemaVersion", ScalarField())
 
-        private class PersonName(val capitalize: Boolean = false) : ScalarType("name")
-        private class PersonAge : ScalarType("age")
+    class Person : NamedField() {
+        fun book(title: String, init: Book.() -> Unit) =
+            initField("book", Book(), Argument("title", title), init = init)
+
+        fun name(capitalize: Boolean = false) =
+            initField("name", ScalarField(), Argument("capitalize", capitalize, false))
+
+        fun age() = initField("age", ScalarField())
     }
 
-    class Book(private val authorName: String? = null, private val title: String? = null) : Type("Book") {
-        fun author(init: Person.() -> Unit) = initField(Person(), init)
-        fun title() = initField(BookTitle())
-
-        private class BookTitle : ScalarType("title")
+    class Book : NamedField() {
+        fun author(init: Person.() -> Unit) = initField("author", Person(), init = init)
+        fun title() = initField("title", ScalarField())
     }
 
     @Test
     fun test() {
         val query = query {
+            schemaVersion()
             person(name = "Boris", age = 19) {
                 name(capitalize = true)
                 age()
                 book(title = "This tool spec") {
                     author {
-                        name()
+                        // will not be present in the query, because 'false' is the default value
+                        name(capitalize = false)
                     }
                     title()
                 }
             }
-            book(authorName = "Boris") {
+            // defaults with authorName equal to "Boris"
+            book(title = "This tool spec") {
                 title()
                 author {
                     name()
                     age()
                 }
             }
+            // null will be in the query, because it's not default
+            book(authorName = null, title = "Hello world") {
+                author {
+                    name()
+                }
+            }
         }
+        // 'flattenQuery' leaves only words and numbers to make testing easier
         assertEquals(
-            flattenQuery(query.toString()).replace(" capitalize false", ""),
-            "query Person name Boris age 19 name capitalize true age Book title This tool " +
-                    "spec Person name title Book authorName Boris title Person name age"
+            flattenQuery(query.toString()),
+            "query schemaVersion person name Boris age 19 name capitalize true age " +
+                    "book title This tool spec author name title book title This tool spec title author name age " +
+                    "book authorName null title Hello world author name"
         )
     }
 }
