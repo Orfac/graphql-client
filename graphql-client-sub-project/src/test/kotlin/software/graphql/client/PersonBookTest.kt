@@ -1,6 +1,7 @@
 package software.graphql.client
 
 import org.junit.Test
+import java.time.LocalDate
 import kotlin.test.assertEquals
 
 /**
@@ -22,8 +23,8 @@ import kotlin.test.assertEquals
  * </code>
  */
 internal class PersonBookTest {
-    private fun Query.person(name: String, age: Int? = null, init: Person.() -> Unit) =
-        initRoot("person", Person(), Argument("name", name), Argument("age", age, null), init = init)
+    private fun Query.person(name: String, dateOfBirth: MyDateType? = null, init: Person.() -> Unit) =
+        initRoot("person", Person(), Argument("name", name), Argument("dateOfBirth", dateOfBirth, null), init = init)
 
     private fun Query.book(authorName: String? = "Boris", title: String? = null, init: Book.() -> Unit) =
         initRoot(
@@ -50,11 +51,15 @@ internal class PersonBookTest {
         fun title() = initField("title", ScalarField())
     }
 
+    class MyDateType(private val date: LocalDate) : Scalar() {
+        override fun render() = "\"$date\""
+    }
+
     @Test
     fun test() {
         val query = query {
             schemaVersion()
-            person(name = "Boris", age = 19) {
+            person(name = "Boris", dateOfBirth = MyDateType(LocalDate.of(1970, 1, 1))) {
                 name(capitalize = true)
                 age()
                 book(title = "This tool spec") {
@@ -83,7 +88,7 @@ internal class PersonBookTest {
         // 'flattenQuery' leaves only words and numbers to make testing easier
         assertEquals(
             flattenQuery(query.toString()),
-            "query schemaVersion person name Boris age 19 name capitalize true age " +
+            "query schemaVersion person name Boris dateOfBirth 1970 01 01 name capitalize true age " +
                     "book title This tool spec author name title book title This tool spec title author name age " +
                     "book authorName null title Hello world author name"
         )

@@ -81,10 +81,15 @@ open class ScalarField : NamedField() {
     }
 }
 
-data class Argument(val name: String, val value: Any?, var defaultValue: Any? = null) {
+class Argument(val name: String, val value: Any?, var defaultValue: Any? = null) {
     override fun toString() = when (value) {
         defaultValue -> ""
         is String -> "$name=\"$value\""
         else -> "$name=$value"
     }
+}
+
+abstract class Scalar {
+    override fun toString() = render()
+    abstract fun render(): String
 }
