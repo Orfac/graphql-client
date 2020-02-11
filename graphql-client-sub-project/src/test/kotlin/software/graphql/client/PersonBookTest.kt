@@ -8,13 +8,14 @@ import kotlin.test.assertEquals
  * This class builds a query for schema like this:
  * <code>
  *     type Query {
- *         person(name: String!, age: Integer): Person
- *         book(authorName: String, title: String): Book
+ *         schemaVersion
+ *         person(name: String!, dateOfBirth: MyDateType): Person
+ *         book(authorName: String = "Boris", title: String): Book
  *     }
  *     type Person {
  *         book(title: String!): Book
- *         name(capitalize: Boolean! = false): String
- *         age: Integer
+ *         name(capitalize: Boolean! = false)
+ *         age
  *     }
  *     type Book {
  *         author: Person

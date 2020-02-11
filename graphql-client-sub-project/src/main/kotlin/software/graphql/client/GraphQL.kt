@@ -14,7 +14,7 @@ class Query() : NamedField() {
     fun <T : NamedField> initRoot(name: String, node: T, vararg arguments: Argument, init: T.() -> Unit) =
         initField(name, node, *arguments, init = init)
 
-    fun <T : ScalarField> initRoot(name: String, node: T, vararg arguments: Argument) =
+    fun initRoot(name: String, node: ScalarField, vararg arguments: Argument) =
         initField(name, node, *arguments)
 }
 
@@ -51,8 +51,8 @@ abstract class NamedField : Field {
         fields.add(node)
     }
 
-    protected fun <T : ScalarField> initField(
-        name: String, node: T,
+    protected fun initField(
+        name: String, node: ScalarField,
         vararg arguments: Argument
     ) {
         node.fieldName = name
@@ -75,13 +75,13 @@ abstract class NamedField : Field {
     override fun toString() = StringBuilder().apply { render(this, "") }.toString()
 }
 
-open class ScalarField : NamedField() {
+class ScalarField : NamedField() {
     override fun render(builder: StringBuilder, indent: String) {
         builder.append("$indent$fieldName${renderArguments()}\n")
     }
 }
 
-class Argument(val name: String, val value: Any?, var defaultValue: Any? = null) {
+class Argument(private val name: String, private val value: Any?, private var defaultValue: Any? = null) {
     override fun toString() = when (value) {
         defaultValue -> ""
         is String -> "$name=\"$value\""
