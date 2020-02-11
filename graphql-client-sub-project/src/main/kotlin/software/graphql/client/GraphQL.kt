@@ -72,7 +72,15 @@ class ScalarField : Field() {
 class Argument(private val name: String, private val value: Any?, private var defaultValue: Any? = null) {
     override fun toString() = when (value) {
         defaultValue -> ""
-        is String -> "$name: \"$value\""
-        else -> "$name: $value"
+        else -> "$name: ${renderValue(value)}"
     }
+
+    companion object {
+        private fun renderValue(data: Any?): String = when (data) {
+            is String -> "\"$data\""
+            is Collection<*> -> data.joinToString(prefix = "[", postfix = "]") { renderValue(it) }
+            else -> data.toString()
+        }
+    }
+
 }

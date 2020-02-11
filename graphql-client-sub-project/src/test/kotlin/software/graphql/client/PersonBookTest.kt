@@ -9,8 +9,9 @@ import kotlin.test.assertEquals
  * <code>
  *     type Query {
  *         schemaVersion
- *         person(name: String!, dateOfBirth: MyDateType, favouritePet: Pet = null): Person
+ *         person(name: String!, dateOfBirth: MyDateType, favouritePets: [Pet!]! = []): Person
  *         book(authorName: String = "Boris", title: String): Book
+ *         allBooks(authorNames: [String!] = [], titles: [String!]!): [Book]
  *     }
  *     type Person {
  *         book(title: String!): Book
@@ -30,14 +31,13 @@ internal class PersonBookTest {
     private fun Query.person(
         name: String,
         dateOfBirth: MyDateType? = null,
-        favouritePet: Pet? = null,
+        favouritePets: List<Pet> = emptyList(),
         init: Person.() -> Unit
     ) = initRoot(
-        "person",
-        Person(),
+        "person", Person(),
         Argument("name", name),
         Argument("dateOfBirth", dateOfBirth, null),
-        Argument("favouritePet", favouritePet, null),
+        Argument("favouritePet", favouritePets, null),
         init = init
     )
 
@@ -48,6 +48,15 @@ internal class PersonBookTest {
             Argument("title", title, null),
             init = init
         )
+
+    private fun Query.allBooks(
+        authorNames: List<String> = emptyList(), titles: List<String> = emptyList(), init: Book.() -> Unit
+    ) = initRoot(
+        "allBooks", Book(),
+        Argument("authorNames", authorNames, emptyList<String>()),
+        Argument("titles", titles, emptyList<String>()),
+        init = init
+    )
 
     private fun Query.schemaVersion() = initRoot("schemaVersion", ScalarField())
 
@@ -70,7 +79,6 @@ internal class PersonBookTest {
         override fun toString() = "\"$date\""
     }
 
-    @Suppress("unused")
     enum class Pet {
         CAT, DOG
     }
@@ -79,12 +87,16 @@ internal class PersonBookTest {
     fun test() {
         val query = query {
             schemaVersion()
-            person(name = "Boris", dateOfBirth = MyDateType(LocalDate.of(1970, 1, 1)), favouritePet = Pet.CAT) {
-                name(capitalize = true)
+            person(
+                name = "Boris",
+                dateOfBirth = MyDateType(LocalDate.of(1970, 1, 1)),
+                favouritePets = arrayListOf(Pet.CAT, Pet.DOG)
+            ) {
+                name()
                 age()
                 book(title = "This tool spec") {
                     author {
-                        // will not be present in the query, because 'false' is the default value
+                        // argument will not be present in the query, because 'false' is the default value
                         name(capitalize = false)
                     }
                     title()
@@ -93,24 +105,26 @@ internal class PersonBookTest {
             // defaults with authorName equal to "Boris"
             book(title = "This tool spec") {
                 title()
-                author {
-                    name()
-                    age()
-                }
             }
             // null will be in the query, because it's not default
             book(authorName = null, title = "Hello world") {
+                author {
+                    name(capitalize = true)
+                }
+            }
+            allBooks(titles = arrayListOf("Hello world", "This tool spec")) {
                 author {
                     name()
                 }
             }
         }
-        // 'flattenQuery' leaves only words and numbers to make testing easier
+        // 'flattenQuery' leaves only words, numbers and double quotes to make testing easier
         assertEquals(
             flattenQuery(query.toString()),
-            "query schemaVersion person name Boris dateOfBirth 1970 01 01 favouritePet CAT name capitalize true age " +
-                    "book title This tool spec author name title book title This tool spec title author name age " +
-                    "book authorName null title Hello world author name"
+            "query schemaVersion person name \"Boris\" dateOfBirth \"1970 01 01\" favouritePet CAT DOG name age " +
+                    "book title \"This tool spec\" author name title book title \"This tool spec\" title " +
+                    "book authorName null title \"Hello world\" author name capitalize true " +
+                    "allBooks titles \"Hello world\" \"This tool spec\" author name"
         )
     }
 }
