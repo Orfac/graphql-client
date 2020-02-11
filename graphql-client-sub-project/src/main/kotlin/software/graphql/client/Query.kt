@@ -5,15 +5,19 @@ import kotlin.reflect.jvm.jvmName
 
 public class Query() {
     public fun buildGraphQL(someObject : Any) : String{
-        var body : String = (someObject :: class.jvmName).split('$')[1]
-
+        var body : String = getClassName(someObject)
         body += " {\n"
 
         someObject :: class.memberProperties.forEach {
             prop -> body += '\t' + prop.name + '\n'
         }
         body += "}"
-        println(body)
         return body
+    }
+
+    private fun getClassName(someObject: Any) : String{
+        return (someObject :: class.jvmName)
+            .split('.').last()
+            .split('$').last()
     }
 }
