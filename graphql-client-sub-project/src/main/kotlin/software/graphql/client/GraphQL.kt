@@ -2,7 +2,7 @@ package software.graphql.client
 
 fun query(vararg arguments: Argument, init: Query.() -> Unit) = Query(arguments).apply(init)
 
-class Query() : NamedField() {
+class Query() : Field() {
     init {
         fieldName = "query"
     }
@@ -11,35 +11,23 @@ class Query() : NamedField() {
         this.arguments = arguments
     }
 
-    fun <T : NamedField> initRoot(name: String, node: T, vararg arguments: Argument, init: T.() -> Unit) =
+    fun <T : Field> initRoot(name: String, node: T, vararg arguments: Argument, init: T.() -> Unit) =
         initField(name, node, *arguments, init = init)
 
     fun initRoot(name: String, node: ScalarField, vararg arguments: Argument) =
         initField(name, node, *arguments)
 }
 
-interface Field {
-    fun render(builder: StringBuilder, indent: String)
-
-    fun <K> MutableMap<K, in String>.enquoteStrings() =
-        this.apply {
-            this.forEach { (key, value) ->
-                if (value is String)
-                    this[key] = "\"$value\""
-            }
-        }
-}
-
 @DslMarker
-annotation class TypeMarker
+annotation class FieldMarker
 
-@TypeMarker
-abstract class NamedField : Field {
+@FieldMarker
+abstract class Field {
     protected lateinit var fieldName: String
-    private val fields = arrayListOf<NamedField>()
+    private val fields = arrayListOf<Field>()
     protected lateinit var arguments: Array<out Argument>
 
-    protected fun <T : NamedField> initField(
+    protected fun <T : Field> initField(
         name: String,
         node: T,
         vararg arguments: Argument,
@@ -60,7 +48,7 @@ abstract class NamedField : Field {
         fields.add(node)
     }
 
-    override fun render(builder: StringBuilder, indent: String) {
+    protected open fun render(builder: StringBuilder, indent: String) {
         builder.append("$indent$fieldName${renderArguments()} {\n")
         for (c in fields)
             c.render(builder, "$indent  ")
@@ -75,7 +63,7 @@ abstract class NamedField : Field {
     override fun toString() = StringBuilder().apply { render(this, "") }.toString()
 }
 
-class ScalarField : NamedField() {
+class ScalarField : Field() {
     override fun render(builder: StringBuilder, indent: String) {
         builder.append("$indent$fieldName${renderArguments()}\n")
     }
@@ -84,12 +72,7 @@ class ScalarField : NamedField() {
 class Argument(private val name: String, private val value: Any?, private var defaultValue: Any? = null) {
     override fun toString() = when (value) {
         defaultValue -> ""
-        is String -> "$name=\"$value\""
-        else -> "$name=$value"
+        is String -> "$name: \"$value\""
+        else -> "$name: $value"
     }
-}
-
-abstract class Scalar {
-    override fun toString() = render()
-    abstract fun render(): String
 }

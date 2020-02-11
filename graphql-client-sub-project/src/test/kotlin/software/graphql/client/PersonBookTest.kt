@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
  * <code>
  *     type Query {
  *         schemaVersion
- *         person(name: String!, dateOfBirth: MyDateType): Person
+ *         person(name: String!, dateOfBirth: MyDateType, favouritePet: Pet = null): Person
  *         book(authorName: String = "Boris", title: String): Book
  *     }
  *     type Person {
@@ -21,11 +21,25 @@ import kotlin.test.assertEquals
  *         author: Person
  *         title: String
  *     }
+ *     enum Pet {
+ *         CAT, DOG
+ *     }
  * </code>
  */
 internal class PersonBookTest {
-    private fun Query.person(name: String, dateOfBirth: MyDateType? = null, init: Person.() -> Unit) =
-        initRoot("person", Person(), Argument("name", name), Argument("dateOfBirth", dateOfBirth, null), init = init)
+    private fun Query.person(
+        name: String,
+        dateOfBirth: MyDateType? = null,
+        favouritePet: Pet? = null,
+        init: Person.() -> Unit
+    ) = initRoot(
+        "person",
+        Person(),
+        Argument("name", name),
+        Argument("dateOfBirth", dateOfBirth, null),
+        Argument("favouritePet", favouritePet, null),
+        init = init
+    )
 
     private fun Query.book(authorName: String? = "Boris", title: String? = null, init: Book.() -> Unit) =
         initRoot(
@@ -37,7 +51,7 @@ internal class PersonBookTest {
 
     private fun Query.schemaVersion() = initRoot("schemaVersion", ScalarField())
 
-    class Person : NamedField() {
+    class Person : Field() {
         fun book(title: String, init: Book.() -> Unit) =
             initField("book", Book(), Argument("title", title), init = init)
 
@@ -47,20 +61,25 @@ internal class PersonBookTest {
         fun age() = initField("age", ScalarField())
     }
 
-    class Book : NamedField() {
+    class Book : Field() {
         fun author(init: Person.() -> Unit) = initField("author", Person(), init = init)
         fun title() = initField("title", ScalarField())
     }
 
-    class MyDateType(private val date: LocalDate) : Scalar() {
-        override fun render() = "\"$date\""
+    class MyDateType(private val date: LocalDate) {
+        override fun toString() = "\"$date\""
+    }
+
+    @Suppress("unused")
+    enum class Pet {
+        CAT, DOG
     }
 
     @Test
     fun test() {
         val query = query {
             schemaVersion()
-            person(name = "Boris", dateOfBirth = MyDateType(LocalDate.of(1970, 1, 1))) {
+            person(name = "Boris", dateOfBirth = MyDateType(LocalDate.of(1970, 1, 1)), favouritePet = Pet.CAT) {
                 name(capitalize = true)
                 age()
                 book(title = "This tool spec") {
@@ -89,7 +108,7 @@ internal class PersonBookTest {
         // 'flattenQuery' leaves only words and numbers to make testing easier
         assertEquals(
             flattenQuery(query.toString()),
-            "query schemaVersion person name Boris dateOfBirth 1970 01 01 name capitalize true age " +
+            "query schemaVersion person name Boris dateOfBirth 1970 01 01 favouritePet CAT name capitalize true age " +
                     "book title This tool spec author name title book title This tool spec title author name age " +
                     "book authorName null title Hello world author name"
         )
