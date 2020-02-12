@@ -1,22 +1,20 @@
 package software.graphql.client
 
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.jvmName
 
 object GraphQL {
-    fun buildGraphQL(someObject : KClass<*>) : String{
+    fun buildQuery(someObject : KClass<*>) : String{
         var body : String = getClassName(someObject)
         body += " {\n"
-
         someObject.memberProperties.forEach {
-            prop -> run {
-                val isClass = (prop.returnType.classifier as? KClass<*>)?.isData ?: false
-                val propString = if (isClass) buildGraphQL(prop.returnType.classifier as KClass<*>) else prop.name
-                body += '\t' + propString + '\n'
-            }
+            prop ->
+            run { body += '\t' + buildProperty(prop) + '\n' }
         }
         body += "}"
+
         return body
     }
 
@@ -25,6 +23,16 @@ object GraphQL {
             .split('.').last()
             .split('$').last()
     }
+
+    private fun buildProperty(prop: KProperty1<out Any, Any?>): String {
+        // Checking if property is data class
+        val isDataClass = (prop.returnType.classifier as? KClass<*>)?.isData ?: false
+        return if (isDataClass)
+            buildQuery(prop.returnType.classifier as KClass<*>)
+            else prop.name
+    }
+
+
 
 
 }
