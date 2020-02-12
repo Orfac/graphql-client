@@ -31,7 +31,6 @@ public class GraphQLTest {
         data class SubProduct(val id: Int, val name: String)
         data class Product(val id: Int, val subProduct: SubProduct)
 
-        println(GraphQL.buildQuery(Product::class))
         assertEquals(
             "Product {\n\tid\n\tSubProduct {\n\tid\n\tname\n}\n}",
             GraphQL.buildQuery(Product::class)
@@ -44,7 +43,6 @@ public class GraphQLTest {
         data class SubProduct1(val id: Int, val subProduct2: SubProduct2)
         data class Product(val id: Int, val subProduct: SubProduct1)
 
-        println(GraphQL.buildQuery(Product::class))
         assertEquals(
             "Product {\n\tid\n\tSubProduct1 {\n\tid\n\tSubProduct2 {\n\tid\n\tname\n}\n}\n}",
             GraphQL.buildQuery(Product::class)
