@@ -13,3 +13,4 @@ pluginManagement {
         }
     }
 }
+include("annotations")
