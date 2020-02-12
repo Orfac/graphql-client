@@ -22,7 +22,6 @@ import java.time.LocalDate
  *         author: Person
  *         title: String
  *     }
- *     type AuthorBook = Person | Book
  *     enum Pet {
  *         CAT, DOG
  *     }
@@ -59,50 +58,22 @@ internal fun Query.allBooks(
     init = init
 )
 
-internal fun Query.authorBook(
-    dateOfBirth: MyDateType? = null,
-    favouritePets: List<Pet> = emptyList(),
-    authorName: String? = "Boris",
-    title: String? = null,
-    init: AuthorBook.() -> Unit
-) = initRoot(
-    "authorBook", AuthorBook(),
-    Argument("dateOfBirth", dateOfBirth, null),
-    Argument("favouritePet", favouritePets, emptyList<Pet>()),
-    Argument("authorName", authorName, "Boris"),
-    Argument("title", title, null),
-    init = init
-)
-
 internal fun Query.schemaVersion() = initRoot("schemaVersion", ScalarField())
 
-internal interface IPerson {
-    fun book(title: String, init: Book.() -> Unit): Book
-    fun name(capitalize: Boolean = false): ScalarField
-    fun age(): ScalarField
-}
-
-internal interface IBook {
-    fun author(init: Person.() -> Unit): Person
-    fun title(): ScalarField
-}
-
-internal class Person : Field(), IPerson {
-    override fun book(title: String, init: Book.() -> Unit) =
+internal class Person : Field() {
+    fun book(title: String, init: Book.() -> Unit) =
         initField("book", Book(), Argument("title", title), init = init)
 
-    override fun name(capitalize: Boolean) =
+    fun name(capitalize: Boolean = false) =
         initField("name", ScalarField(), Argument("capitalize", capitalize, false))
 
-    override fun age() = initField("age", ScalarField())
+    fun age() = initField("age", ScalarField())
 }
 
-internal class Book : Field(), IBook {
-    override fun author(init: Person.() -> Unit) = initField("author", Person(), init = init)
-    override fun title() = initField("title", ScalarField())
+internal class Book : Field() {
+    fun author(init: Person.() -> Unit) = initField("author", Person(), init = init)
+    fun title() = initField("title", ScalarField())
 }
-
-internal class AuthorBook : Field(), IPerson by Person(), IBook by Book()
 
 internal class MyDateType(private val date: LocalDate) {
     override fun toString() = "\"$date\""

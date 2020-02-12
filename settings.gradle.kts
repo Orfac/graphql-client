@@ -1,6 +1,6 @@
 rootProject.name = "graphql-client"
 
-include("graphql-client-sub-project")
+include("graphql-client-dsl")
 
 val kotlinVersion: String by settings
 

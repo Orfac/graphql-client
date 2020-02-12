@@ -4,6 +4,8 @@ fun query(queryName: String = "", vararg arguments: Argument, init: Query.() -> 
     Query(queryName, arguments).apply(init)
 
 class Query(queryName: String) : Field() {
+    private val createdFragments = arrayListOf<Fragment<*>>()
+
     init {
         fieldName = "query $queryName"
     }
@@ -26,6 +28,21 @@ class Query(queryName: String) : Field() {
         vararg arguments: Argument
     ) =
         initField(name, node, *arguments)
+
+    fun <T : Field> createFragment(name: String, onType: T, onTypeName: String, init: T.() -> Unit): Fragment<T> {
+        val fragment = Fragment(init, onType, onTypeName, name)
+        createdFragments.add(fragment)
+        return fragment
+    }
+
+    override fun render(builder: StringBuilder, indent: String) {
+        builder.append("$indent$fieldName${renderArguments()} {\n")
+
+        createdFragments.forEach { it.renderDeclaration(builder, "$indent  ") }
+        renderFields(builder, "$indent  ")
+
+        builder.append("$indent}\n")
+    }
 }
 
 @DslMarker
@@ -33,10 +50,11 @@ annotation class FieldMarker
 
 @FieldMarker
 abstract class Field {
-    protected lateinit var fieldName: String
+    lateinit var fieldName: String
     private lateinit var fieldAlias: String
     private val fields = arrayListOf<Field>()
     protected lateinit var arguments: Array<out Argument>
+    protected val fragments = arrayListOf<Fragment<out Field>>()
 
     protected fun <T : Field> initField(
         name: String,
@@ -65,6 +83,14 @@ abstract class Field {
         field.fieldAlias = this
     }
 
+    fun <T : Field> T.addFragment(fragment: Fragment<T>) {
+        fragments.add(fragment)
+    }
+
+    fun <T : Field> T.addInlineFragment(onType: T, onTypeName: String, init: T.() -> Unit) {
+        fragments.add(Fragment(init, onType, onTypeName))
+    }
+
     protected open fun render(builder: StringBuilder, indent: String) {
         builder.append(indent)
 
@@ -72,16 +98,19 @@ abstract class Field {
             builder.append("$fieldAlias: ")
 
         builder.append("$fieldName${renderArguments()} {\n")
-
-        for (c in fields)
-            c.render(builder, "$indent  ")
-
+        renderFields(builder, "$indent  ")
+        fragments.forEach { it.renderUsage(builder, "$indent  ") }
         builder.append("$indent}\n")
+    }
+
+    fun renderFields(builder: StringBuilder, indent: String) {
+        for (c in fields)
+            c.render(builder, indent)
     }
 
     fun renderArguments() =
         arguments.map(Argument::toString).filter { it.isNotEmpty() }
-            .joinToString(prefix = "(", postfix = ")") { it }
+            .takeIf { it.isNotEmpty() }?.joinToString(prefix = "(", postfix = ")") { it } ?: ""
 
     override fun toString() = StringBuilder().apply { render(this, "") }.toString()
 }
@@ -106,4 +135,35 @@ class Argument(private val name: String, private val value: Any?, private var de
         }
     }
 
+}
+
+class Fragment<T : Field> internal constructor(
+    val init: T.() -> Unit,
+    private val onType: T,
+    private val onTypeName: String,
+    private val name: String = ""
+) {
+    private var initialized = false
+
+    fun renderDeclaration(builder: StringBuilder, indent: String) {
+        if (name.isEmpty()) {
+            builder.append("$indent... on $onTypeName {\n")
+        } else {
+            builder.append("${indent}fragment $name on $onTypeName {\n")
+        }
+        if (!initialized) {
+            onType.init()
+            initialized = true
+        }
+        onType.renderFields(builder, "$indent  ")
+        builder.append("$indent}\n")
+    }
+
+    fun renderUsage(builder: StringBuilder, indent: String) {
+        if (name.isEmpty()) {
+            renderDeclaration(builder, indent)
+        } else {
+            builder.append("$indent...$name\n")
+        }
+    }
 }
