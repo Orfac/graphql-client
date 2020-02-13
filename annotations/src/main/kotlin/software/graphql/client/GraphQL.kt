@@ -7,7 +7,7 @@ import kotlin.reflect.jvm.jvmName
 
 object GraphQL {
     fun buildQuery(someObject : KClass<*>) : String{
-        var body : String = getClassName(someObject)
+        var body : String = someObject.simpleName ?: ""
         body += " {\n"
         someObject.memberProperties.forEach {
             prop ->
@@ -16,12 +16,6 @@ object GraphQL {
         body += "}"
 
         return body
-    }
-
-    private fun getClassName(someObject: KClass<*>) : String{
-        return someObject.jvmName
-            .split('.').last()
-            .split('$').last()
     }
 
     private fun buildProperty(prop: KProperty1<out Any, Any?>): String {
