@@ -19,13 +19,16 @@ object GraphQL {
     }
 
     private fun buildProperty(prop: KProperty1<out Any, Any?>): String {
-        // Checking if property is data class
-        val isDataClass = (prop.returnType.classifier as? KClass<*>)?.isData ?: false
-        return if (isDataClass)
+        return if (!isPrimitiveType(prop))
             buildQuery(prop.returnType.classifier as KClass<*>)
             else prop.name
     }
 
+    private fun isPrimitiveType(prop: KProperty1<out Any, Any?>) : Boolean{
+        val className = (prop.returnType.classifier as? KClass<*>)?.simpleName ?: ""
+        val primitives = arrayOf("Int", "String", "Double")
+        return className == "" || className in primitives
+    }
 
 
 
