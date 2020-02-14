@@ -1,169 +1,64 @@
 package software.graphql.client
 
-fun query(queryName: String = "", vararg arguments: Argument, init: Query.() -> Unit) =
-    Query(queryName, arguments).apply(init)
-
-class Query(queryName: String) : Field() {
-    private val createdFragments = arrayListOf<Fragment<*>>()
-
-    init {
-        fieldName = "query $queryName"
+abstract class RenderableEntry {
+    internal abstract fun renderMarker(): String
+    private fun renderNested(builder: StringBuilder, indent: String) {
+        for (nested in nestedEntries())
+            nested.render(builder, "$indent  ")
     }
 
-    constructor(queryName: String, arguments: Array<out Argument>) : this(queryName) {
-        this.arguments = arguments
-    }
+    internal abstract fun nestedEntries(): List<RenderableEntry>
 
-    fun <T : Field> initRoot(
-        name: String,
-        node: T,
-        vararg arguments: Argument,
-        init: T.() -> Unit
-    ) =
-        initField(name, node, *arguments, init = init)
-
-    fun initRoot(
-        name: String,
-        node: ScalarField,
-        vararg arguments: Argument
-    ) =
-        initField(name, node, *arguments)
-
-    fun <T : Field> createFragment(name: String, onType: T, onTypeName: String, init: T.() -> Unit): Fragment<T> {
-        val fragment = Fragment(init, onType, onTypeName, name)
-        createdFragments.add(fragment)
-        return fragment
-    }
-
-    override fun render(builder: StringBuilder, indent: String) {
-        builder.append("$indent$fieldName${renderArguments()} {\n")
-
-        createdFragments.forEach { it.renderDeclaration(builder, "$indent  ") }
-        renderFields(builder, "$indent  ")
-
+    internal open fun render(builder: StringBuilder, indent: String) {
+        builder.append("$indent${renderMarker()} {\n")
+        renderNested(builder, "$indent  ")
         builder.append("$indent}\n")
     }
+
+    fun render() = StringBuilder().apply { render(this, "") }.toString()
+
+    override fun toString() = StringBuilder().apply {
+        append("${renderMarker()} {\n")
+        for (nested in nestedEntries()) {
+            append("  ${nested.renderMarker()}")
+            if (nested.nestedEntries().isNotEmpty())
+                append(" {...}")
+            append("\n")
+        }
+        append("}\n")
+    }.toString()
 }
 
 @DslMarker
 annotation class FieldMarker
 
 @FieldMarker
-abstract class Field {
-    lateinit var fieldName: String
-    private lateinit var fieldAlias: String
-    private val fields = arrayListOf<Field>()
-    protected lateinit var arguments: Array<out Argument>
-    protected val fragments = arrayListOf<Fragment<out Field>>()
+abstract class Field(private val fieldName: String) : RenderableEntry() {
+    private val requestedFields = arrayListOf<Field>()
 
-    protected fun <T : Field> initField(
-        name: String,
-        node: T,
-        vararg arguments: Argument,
-        init: T.() -> Unit
-    ): T {
-        node.fieldName = name
-        node.arguments = arguments
-        node.init()
-        fields.add(node)
-        return node
-    }
+    protected fun <T : Field> initField(field: T, init: T.() -> Unit) =
+        field.apply(init)
+            .also { requestedFields.add(it) }
 
-    protected fun initField(
-        name: String, node: ScalarField,
-        vararg arguments: Argument
-    ): ScalarField {
-        node.fieldName = name
-        node.arguments = arguments
-        fields.add(node)
-        return node
-    }
+    protected fun initScalarField(fieldName: String) = ScalarField(fieldName).also { requestedFields.add(it) }
 
-    infix fun String.alias(field: Field) {
-        field.fieldAlias = this
-    }
+    override fun renderMarker() = fieldName
 
-    fun <T : Field> T.addFragment(fragment: Fragment<T>) {
-        fragments.add(fragment)
-    }
+    override fun nestedEntries(): List<RenderableEntry> = requestedFields
 
-    fun <T : Field> T.addInlineFragment(onType: T, onTypeName: String, init: T.() -> Unit) {
-        fragments.add(Fragment(init, onType, onTypeName))
-    }
-
-    protected open fun render(builder: StringBuilder, indent: String) {
-        builder.append(indent)
-
-        if (this::fieldAlias.isInitialized && fieldAlias.isNotEmpty())
-            builder.append("$fieldAlias: ")
-
-        builder.append("$fieldName${renderArguments()} {\n")
-        renderFields(builder, "$indent  ")
-        fragments.forEach { it.renderUsage(builder, "$indent  ") }
-        builder.append("$indent}\n")
-    }
-
-    fun renderFields(builder: StringBuilder, indent: String) {
-        for (c in fields)
-            c.render(builder, indent)
-    }
-
-    fun renderArguments() =
-        arguments.map(Argument::toString).filter { it.isNotEmpty() }
-            .takeIf { it.isNotEmpty() }?.joinToString(prefix = "(", postfix = ")") { it } ?: ""
-
-    override fun toString() = StringBuilder().apply { render(this, "") }.toString()
-}
-
-class ScalarField : Field() {
     override fun render(builder: StringBuilder, indent: String) {
-        builder.append("$indent$fieldName${renderArguments()}\n")
+        if (this !is ScalarField && nestedEntries().isEmpty())
+            throw RuntimeException("Invalid query: no subfields of '$fieldName' specified")
+        super.render(builder, indent)
     }
 }
 
-class Argument(private val name: String, private val value: Any?, private var defaultValue: Any? = null) {
-    override fun toString() = when (value) {
-        defaultValue -> ""
-        else -> "$name: ${renderValue(value)}"
+class ScalarField(fieldName: String) : Field(fieldName) {
+    override fun nestedEntries() = emptyList<RenderableEntry>()
+
+    override fun render(builder: StringBuilder, indent: String) {
+        builder.append("$indent${renderMarker()}\n")
     }
 
-    companion object {
-        private fun renderValue(data: Any?): String = when (data) {
-            is String -> "\"$data\""
-            is Collection<*> -> data.joinToString(prefix = "[", postfix = "]") { renderValue(it) }
-            else -> data.toString()
-        }
-    }
-
-}
-
-class Fragment<T : Field> internal constructor(
-    val init: T.() -> Unit,
-    private val onType: T,
-    private val onTypeName: String,
-    private val name: String = ""
-) {
-    private var initialized = false
-
-    fun renderDeclaration(builder: StringBuilder, indent: String) {
-        if (name.isEmpty()) {
-            builder.append("$indent... on $onTypeName {\n")
-        } else {
-            builder.append("${indent}fragment $name on $onTypeName {\n")
-        }
-        if (!initialized) {
-            onType.init()
-            initialized = true
-        }
-        onType.renderFields(builder, "$indent  ")
-        builder.append("$indent}\n")
-    }
-
-    fun renderUsage(builder: StringBuilder, indent: String) {
-        if (name.isEmpty()) {
-            renderDeclaration(builder, indent)
-        } else {
-            builder.append("$indent...$name\n")
-        }
-    }
+    override fun toString() = renderMarker()
 }
