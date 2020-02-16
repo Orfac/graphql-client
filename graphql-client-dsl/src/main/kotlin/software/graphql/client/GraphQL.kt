@@ -33,7 +33,7 @@ abstract class RenderableEntry {
 annotation class FieldMarker
 
 @FieldMarker
-abstract class Field(private val fieldName: String) : RenderableEntry() {
+abstract class Field(private val fieldName: String, private vararg val arguments: Argument<*>) : RenderableEntry() {
     private val requestedFields = arrayListOf<Field>()
 
     protected fun <T : Field> initField(field: T, init: T.() -> Unit) =
@@ -42,7 +42,14 @@ abstract class Field(private val fieldName: String) : RenderableEntry() {
 
     protected fun initScalarField(fieldName: String) = ScalarField(fieldName).also { requestedFields.add(it) }
 
-    override fun renderMarker() = fieldName
+    override fun renderMarker() = "$fieldName${renderArguments()}"
+
+    private fun renderArguments() =
+        arguments.filter { it.isNotDefault() }
+            .takeIf { it.isNotEmpty() }
+            ?.map(Argument<*>::toString)
+            ?.joinToString(prefix = "(", postfix = ")") { it }
+            ?: ""
 
     override fun nestedEntries(): List<RenderableEntry> = requestedFields
 
@@ -53,7 +60,7 @@ abstract class Field(private val fieldName: String) : RenderableEntry() {
     }
 }
 
-class ScalarField(fieldName: String) : Field(fieldName) {
+class ScalarField(fieldName: String, vararg arguments: Argument<*>) : Field(fieldName, *arguments) {
     override fun nestedEntries() = emptyList<RenderableEntry>()
 
     override fun render(builder: StringBuilder, indent: String) {
@@ -61,4 +68,18 @@ class ScalarField(fieldName: String) : Field(fieldName) {
     }
 
     override fun toString() = renderMarker()
+}
+
+class Argument<T>(private val name: String, private val value: T?, private val defaultValue: T? = null) {
+    override fun toString() = "$name: ${renderValue(value)}"
+
+    fun isNotDefault() = value != defaultValue
+
+    companion object {
+        private fun renderValue(data: Any?): String = when (data) {
+            is String -> "\"$data\""
+            is Collection<*> -> data.joinToString(prefix = "[", postfix = "]") { renderValue(it) }
+            else -> data.toString() // custom types and input objects will go here
+        }
+    }
 }

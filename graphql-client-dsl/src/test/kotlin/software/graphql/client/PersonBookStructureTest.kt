@@ -4,8 +4,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
-internal class PersonBookTestRender {
-
+internal class PersonBookStructureTest {
     @Test
     fun `throws an exception when no subfields specified`() {
         assertFails {
@@ -20,17 +19,16 @@ internal class PersonBookTestRender {
         assertFails {
             query { book { author { } } }.render()
         }
-
     }
 
     @Test
     fun `simplest query`() {
         val query = query {
             version()
-        }.render()
+        }
 
-        assertEquals(Render.SIMPLEST_QUERY, query.flatten())
-
+        assertEquals(Render.STRUCTURE.SIMPLEST_QUERY, query.render().flatten())
+        assertEquals(ToString.STRUCTURE.SIMPLEST_QUERY, query.toString().flatten())
     }
 
     @Test
@@ -41,10 +39,10 @@ internal class PersonBookTestRender {
                     name()
                 }
             }
-        }.render()
+        }
 
-        assertEquals(Render.NESTED_FIELDS, query.flatten())
-
+        assertEquals(Render.STRUCTURE.NESTED_FIELDS, query.render().flatten())
+        assertEquals(ToString.STRUCTURE.NESTED_FIELDS, query.toString().flatten())
     }
 
     @Test
@@ -60,9 +58,10 @@ internal class PersonBookTestRender {
                 name()
                 age()
             }
-        }.render()
+            version()
+        }
 
-        assertEquals(Render.COMPLEX_QUERY, query.flatten())
-
+        assertEquals(Render.STRUCTURE.COMPLEX_QUERY, query.render().flatten())
+        assertEquals(ToString.STRUCTURE.COMPLEX_QUERY, query.toString().flatten())
     }
 }
