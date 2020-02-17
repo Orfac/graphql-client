@@ -13,4 +13,4 @@ pluginManagement {
         }
     }
 }
-include("annotations")
+include("graphql-client-annotations")
