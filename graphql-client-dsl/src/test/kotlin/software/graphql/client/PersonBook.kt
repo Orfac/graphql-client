@@ -3,7 +3,7 @@ package software.graphql.client
 fun query(init: Query.() -> Unit) = Query().apply(init)
 
 class Query : Field("query") {
-    fun version() = initScalarField("version")
+    fun version() = this.initScalarField("version")
 
     fun person(name: String? = null, init: Person.() -> Unit) =
         initField(

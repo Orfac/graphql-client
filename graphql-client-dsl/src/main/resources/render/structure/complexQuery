@@ -1,0 +1,1 @@
+query { book { title author { name } } person { name age } version }
