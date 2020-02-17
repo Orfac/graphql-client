@@ -12,8 +12,7 @@ internal class PersonBookArgumentsTest {
             }
         }
 
-        assertEquals(Render.ARGUMENTS.INT_ARGUMENT, query.render().flatten())
-        assertEquals(ToString.ARGUMENTS.INT_ARGUMENT, query.toString().flatten())
+        assertEquals(getLocalTestResource("intArgument"), query.render().flatten())
     }
 
     @Test
@@ -24,8 +23,7 @@ internal class PersonBookArgumentsTest {
             }
         }
 
-        assertEquals(Render.ARGUMENTS.STRING_ARGUMENT, query.render().flatten())
-        assertEquals(ToString.ARGUMENTS.STRING_ARGUMENT, query.toString().flatten())
+        assertEquals(getLocalTestResource("stringArgument"), query.render().flatten())
     }
 
     @Test
@@ -36,8 +34,7 @@ internal class PersonBookArgumentsTest {
             }
         }
 
-        assertEquals(Render.ARGUMENTS.DEFAULT_ARGUMENT_NOT_PRINTED, query.render().flatten())
-        assertEquals(ToString.ARGUMENTS.DEFAULT_ARGUMENT_NOT_PRINTED, query.toString().flatten())
+        assertEquals(getLocalTestResource("defaultArgumentNotPrinted"), query.render().flatten())
     }
 
     @Test
@@ -48,8 +45,7 @@ internal class PersonBookArgumentsTest {
             }
         }
 
-        assertEquals(Render.ARGUMENTS.MULTIPLE_ARGUMENTS, query.render().flatten())
-        assertEquals(ToString.ARGUMENTS.MULTIPLE_ARGUMENTS, query.toString().flatten())
+        assertEquals(getLocalTestResource("multipleArguments"), query.render().flatten())
     }
 
     @Test
@@ -63,7 +59,9 @@ internal class PersonBookArgumentsTest {
             }
         }
 
-        assertEquals(Render.ARGUMENTS.LIST_AS_ARGUMENT, query.render().flatten())
-        assertEquals(ToString.ARGUMENTS.LIST_AS_ARGUMENT, query.toString().flatten())
+        assertEquals(getLocalTestResource("listAsArgument"), query.render().flatten())
     }
+
+    private fun getLocalTestResource(fileName: String) =
+        getTestResource("/render/arguments/$fileName")
 }

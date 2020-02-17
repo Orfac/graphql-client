@@ -1,0 +1,1 @@
+query { allBooks(authorNames: ["Boris", "Arseniy"]) { author { name } title } }

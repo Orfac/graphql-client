@@ -27,8 +27,7 @@ internal class PersonBookStructureTest {
             version()
         }
 
-        assertEquals(Render.STRUCTURE.SIMPLEST_QUERY, query.render().flatten())
-        assertEquals(ToString.STRUCTURE.SIMPLEST_QUERY, query.toString().flatten())
+        assertEquals(getLocalTestResource("simplestQuery"), query.render().flatten())
     }
 
     @Test
@@ -41,8 +40,7 @@ internal class PersonBookStructureTest {
             }
         }
 
-        assertEquals(Render.STRUCTURE.NESTED_FIELDS, query.render().flatten())
-        assertEquals(ToString.STRUCTURE.NESTED_FIELDS, query.toString().flatten())
+        assertEquals(getLocalTestResource("nestedFields"), query.render().flatten())
     }
 
     @Test
@@ -61,7 +59,9 @@ internal class PersonBookStructureTest {
             version()
         }
 
-        assertEquals(Render.STRUCTURE.COMPLEX_QUERY, query.render().flatten())
-        assertEquals(ToString.STRUCTURE.COMPLEX_QUERY, query.toString().flatten())
+        assertEquals(getLocalTestResource("complexQuery"), query.render().flatten())
     }
+
+    private fun getLocalTestResource(fileName: String) =
+        getTestResource("/render/structure/$fileName")
 }
