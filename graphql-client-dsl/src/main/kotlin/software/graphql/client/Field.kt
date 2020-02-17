@@ -4,28 +4,25 @@ package software.graphql.client
 annotation class FieldMarker
 
 @FieldMarker
-abstract class Field(private val fieldName: String, private vararg val arguments: Argument<*>) : RenderableEntry() {
-    private val requestedFields = arrayListOf<Field>()
+abstract class Field(private val fieldName: String, vararg arguments: Argument<*>) :
+    RenderableEntry("$fieldName${arguments.toList().renderArguments()}") {
+
+    private val requestedFields = mutableListOf<Field>()
 
     internal fun addField(field: Field) {
-        requestedFields.add(field)
+        requestedFields += field
     }
 
     protected fun <T : Field> initField(field: T, init: T.() -> Unit) =
         field.apply(init)
             .also { addField(it) }
 
-    internal fun renderHeader() = "$fieldName${arguments.toList().renderArguments()}"
-
-    override fun renderIndented(append: (String) -> Unit, indent: String) {
+    override fun renderIndented(indent: String): String {
         if (requestedFields.isEmpty())
             throw RuntimeException("Invalid query: no subfields of '$fieldName' specified")
 
-        append("$indent${renderHeader()} {\n")
-        for (field in requestedFields)
-            field.renderIndented(append, "$indent  ")
-        append("$indent}\n")
+        return "$indent$marker {\n" +
+                requestedFields.joinToString(separator = "") { it.renderIndented("$indent  ") } +
+                "$indent}\n"
     }
-
 }
-

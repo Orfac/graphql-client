@@ -1,11 +1,7 @@
 package software.graphql.client
 
-abstract class RenderableEntry {
-    private val builder = StringBuilder()
+abstract class RenderableEntry(protected val marker: String) {
+    internal abstract fun renderIndented(indent: String): String
 
-    internal abstract fun renderIndented(append: (String) -> Unit, indent: String)
-
-    fun render() = builder.apply {
-        renderIndented({ append(it) }, "")
-    }.toString()
+    fun render() = renderIndented("")
 }
