@@ -8,44 +8,44 @@ class GraphQLTest {
 
     @Test
     fun `building query works for simple class with 2 properties`() {
-        data class Product(val id: Int, val name: String)
+        data class product(val id: Int, val name: String)
 
         assertEquals(
-            "Product {\n\tid\n\tname\n}",
-            GraphQL.buildQuery(Product::class)
+            "product {\n\tid\n\tname\n}",
+            GraphQL.buildQuery(product::class)
         )
     }
 
     @Test
     fun `building query works for class with no properties`() {
-        class Product
+        class product
 
         assertEquals(
-            "Product {\n}",
-            GraphQL.buildQuery(Product::class)
+            "product {\n}",
+            GraphQL.buildQuery(product::class)
         )
     }
 
     @Test
     fun `building query works for class with a class inside`() {
-        data class SubProduct(val id: Int, val name: String)
-        data class Product(val id: Int, val subProduct: SubProduct)
+        data class subProduct(val id: Int, val name: String)
+        data class product(val id: Int, val subProduct: subProduct)
 
         assertEquals(
-            "Product {\n\tid\n\tSubProduct {\n\tid\n\tname\n}\n}",
-            GraphQL.buildQuery(Product::class)
+            "product {\n\tid\n\tsubProduct {\n\tid\n\tname\n}\n}",
+            GraphQL.buildQuery(product::class)
         )
     }
 
     @Test
     fun `building query works for class 2 level classes inside each other`() {
-        data class SubProduct2(val id: Int, val name: String)
-        data class SubProduct1(val id: Int, val subProduct2: SubProduct2)
-        data class Product(val id: Int, val subProduct: SubProduct1)
+        data class subProduct2(val id: Int, val name: String)
+        data class subProduct1(val id: Int, val subProduct2: subProduct2)
+        data class product(val id: Int, val subProduct: subProduct1)
 
         assertEquals(
-            "Product {\n\tid\n\tSubProduct1 {\n\tid\n\tSubProduct2 {\n\tid\n\tname\n}\n}\n}",
-            GraphQL.buildQuery(Product::class)
+            "product {\n\tid\n\tsubProduct1 {\n\tid\n\tsubProduct2 {\n\tid\n\tname\n}\n}\n}",
+            GraphQL.buildQuery(product::class)
         )
     }
 }
