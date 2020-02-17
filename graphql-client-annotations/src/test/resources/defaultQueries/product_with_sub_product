@@ -1,0 +1,7 @@
+product {
+	id
+	subProduct {
+	id
+	name
+}
+}

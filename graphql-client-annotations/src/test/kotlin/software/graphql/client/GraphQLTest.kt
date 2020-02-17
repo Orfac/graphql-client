@@ -12,10 +12,12 @@ class GraphQLTest {
         data class product(val id: Int, val name: String)
 
         assertEquals(
-            "product {\n\tid\n\tname\n}",
+            getTestQuery("product_with_id_and_name"),
             GraphQL.buildQuery(product::class)
         )
     }
+
+
 
     @Test
     fun `building query throws an exception for a class with no properties`() {
@@ -31,7 +33,7 @@ class GraphQLTest {
         data class product(val id: Int, val subProduct: subProduct)
 
         assertEquals(
-            "product {\n\tid\n\tsubProduct {\n\tid\n\tname\n}\n}",
+            getTestQuery("product_with_sub_product"),
             GraphQL.buildQuery(product::class)
         )
     }
@@ -43,7 +45,7 @@ class GraphQLTest {
         data class product(val id: Int, val subProduct: subProduct1)
 
         assertEquals(
-            "product {\n\tid\n\tsubProduct1 {\n\tid\n\tsubProduct2 {\n\tid\n\tname\n}\n}\n}",
+            getTestQuery("product_with_sub_products"),
             GraphQL.buildQuery(product::class)
         )
     }

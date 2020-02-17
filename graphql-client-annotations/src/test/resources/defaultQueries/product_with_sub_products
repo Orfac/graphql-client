@@ -1,0 +1,10 @@
+product {
+	id
+	subProduct1 {
+	id
+	subProduct2 {
+	id
+	name
+}
+}
+}
