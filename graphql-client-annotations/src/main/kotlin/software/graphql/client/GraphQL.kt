@@ -9,6 +9,11 @@ object GraphQL {
     fun buildQuery(someObject : KClass<*>) : String{
         var body : String = someObject.simpleName ?: ""
         body += " {\n"
+
+        if (someObject.memberProperties.isEmpty()){
+            throw IllegalArgumentException("There are no properties for a given class")
+        }
+
         someObject.memberProperties.forEach {
             prop ->
             run { body += '\t' + buildProperty(prop) + '\n' }

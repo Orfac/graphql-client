@@ -2,6 +2,7 @@ package software.graphql.client
 
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class GraphQLTest {
 
@@ -17,13 +18,11 @@ class GraphQLTest {
     }
 
     @Test
-    fun `building query works for class with no properties`() {
+    fun `building query throws an exception for a class with no properties`() {
         class product
-
-        assertEquals(
-            "product {\n}",
+        assertFailsWith<IllegalArgumentException> {
             GraphQL.buildQuery(product::class)
-        )
+        }
     }
 
     @Test
