@@ -7,12 +7,12 @@ import kotlin.reflect.jvm.jvmName
 
 object GraphQL {
     fun buildQuery(someObject : KClass<*>) : String{
-        var body : String = someObject.simpleName ?: ""
-        body += " {\n"
-
         if (someObject.memberProperties.isEmpty()){
             throw IllegalArgumentException("There are no properties for a given class")
         }
+
+        var body : String = someObject.simpleName ?: ""
+        body += " {\n"
 
         someObject.memberProperties.forEach {
             prop ->
