@@ -1,0 +1,1 @@
+query { book(maxPages: 100) { title } }
