@@ -1,7 +1,11 @@
 package software.graphql.client
 
-data class Argument<T>(private val name: String, val value: T?, val defaultValue: T? = null) {
-    internal fun render() = "$name: ${renderValue(value)}"
+data class Argument<T>(private val name: String, internal val value: T, internal val defaultValue: T? = null) {
+    internal fun render(): String {
+        if (!validateName(name))
+            throw RuntimeException("Invalid query: incorrect argument name: '$name'")
+        return "$name: ${renderValue(value)}"
+    }
 }
 
 private fun renderValue(data: Any?): String = when (data) {

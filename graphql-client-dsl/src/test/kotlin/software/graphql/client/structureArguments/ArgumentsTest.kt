@@ -1,9 +1,11 @@
-package software.graphql.client
+package software.graphql.client.structureArguments
 
 import org.junit.Test
+import software.graphql.client.flatten
+import software.graphql.client.getTestResource
 import kotlin.test.assertEquals
 
-internal class PersonBookArgumentsTest {
+internal class ArgumentsTest {
     @Test
     fun `int argument`() {
         val query = query {
