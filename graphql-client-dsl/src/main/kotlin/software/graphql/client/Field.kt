@@ -7,7 +7,7 @@ annotation class FieldMarker
 abstract class Field(
     private val fieldName: String,
     private val fieldAlias: String,
-    private vararg val arguments: Argument<*>
+    private val arguments: Collection<Argument<*>> = emptyList()
 ) : RenderableEntry() {
 
     private val requestedChildren = mutableListOf<RenderableEntry>()
@@ -19,6 +19,7 @@ abstract class Field(
     protected fun <T : Field> initField(field: T, init: T.() -> Unit) =
         field.apply(init)
             .also { addChild(it) }
+    internal fun childrenRequested() = requestedChildren.isNotEmpty()
 
     override fun renderIndented(indent: String): String {
         val marker = "$fieldName${arguments.toList().renderArguments()}"
@@ -29,8 +30,10 @@ abstract class Field(
                 "$indent}\n"
     }
 
+    internal fun renderWithoutValidation(indent: String) = renderIndented(indent)
+
     override fun validate() {
-        if (requestedChildren.isEmpty())
+        if (!childrenRequested())
             throw QueryValidationException("No subfields of '$fieldAlias: $fieldName' specified")
 
         if (!nameValid(fieldName))
@@ -55,6 +58,10 @@ abstract class Field(
         }
     }
 }
+
+fun <T : Field> Field.initField(field: T, init: T.() -> Unit) =
+    field.apply(init)
+        .also { addChild(it) }
 
 internal fun String.withAlias(alias: String) =
     if (alias.isNotEmpty())
