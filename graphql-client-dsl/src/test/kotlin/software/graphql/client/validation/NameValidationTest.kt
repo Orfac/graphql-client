@@ -1,6 +1,8 @@
 package software.graphql.client.validation
 
 import org.junit.Test
+import software.graphql.client.newFragment
+import software.graphql.client.query
 import kotlin.test.assertFails
 
 internal class NameValidationTest {
@@ -42,6 +44,14 @@ internal class NameValidationTest {
     fun `bad argument name`() {
         assertFails {
             query { `fun` { badArgument(100) } }.render()
+        }
+    }
+
+    @Test
+    fun `bad fragment name`() {
+        assertFails {
+            newFragment("a very bad fragment!", ::Fun) {
+            }(query {}).render()
         }
     }
 }

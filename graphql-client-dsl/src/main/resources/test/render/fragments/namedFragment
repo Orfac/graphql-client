@@ -1,0 +1,1 @@
+fragment personInfo on Person { name age } query { person { ...personInfo } }

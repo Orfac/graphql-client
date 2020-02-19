@@ -1,6 +1,6 @@
 package software.graphql.client
 
-import software.graphql.client.structureArguments.ArgumentsTest
+import software.graphql.client.features.ArgumentsTest
 import java.io.BufferedReader
 import java.io.InputStreamReader
 

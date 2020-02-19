@@ -1,0 +1,1 @@
+fragment personName on Person { name } query { person { ...personName ... on Person { age } } }
