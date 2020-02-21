@@ -6,6 +6,9 @@ plugins {
 
 allprojects {
     group = "software.graphql.client"
+    repositories {
+        mavenCentral()
+    }
 }
 
 subprojects {
