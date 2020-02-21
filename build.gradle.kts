@@ -7,17 +7,13 @@ plugins {
 allprojects {
     group = "software.graphql.client"
     repositories {
-        mavenCentral()
+        mavenLocal()
+        jcenter()
     }
 }
 
 subprojects {
     apply(plugin = "kotlin")
-
-    repositories {
-        mavenLocal()
-        jcenter()
-    }
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
