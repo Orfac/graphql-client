@@ -18,7 +18,6 @@ class QueryBuilderTest {
     }
 
 
-
     @Test
     fun `building query throws an exception for a class with no properties`() {
         class product
