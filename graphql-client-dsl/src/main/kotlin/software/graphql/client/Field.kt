@@ -7,38 +7,52 @@ annotation class FieldMarker
 abstract class Field(
     private val fieldName: String,
     private val fieldAlias: String,
-    vararg arguments: Argument<*>
-) : RenderableEntry(
-    "$fieldName${arguments.toList().renderArguments()}"
-        .withAlias(fieldAlias)
-) {
+    private vararg val arguments: Argument<*>
+) : RenderableEntry() {
 
-    private val requestedFields = mutableListOf<Field>()
+    private val requestedChildren = mutableListOf<RenderableEntry>()
 
-    internal fun addField(field: Field) {
-        if (requestedFields.any { it.fieldName == field.fieldName && it.fieldAlias == field.fieldAlias })
-            throw RuntimeException(
-                "Invalid query: found fields with same name and alias: " +
-                        "'${field.fieldAlias}: ${field.fieldName}'"
-            )
-
-        requestedFields += field
+    internal fun addChild(child: RenderableEntry) {
+        requestedChildren += child
     }
 
     protected fun <T : Field> initField(field: T, init: T.() -> Unit) =
         field.apply(init)
-            .also { addField(it) }
+            .also { addChild(it) }
 
     override fun renderIndented(indent: String): String {
-        if (requestedFields.isEmpty())
-            throw RuntimeException("Invalid query: no subfields of '$fieldAlias: $fieldName' specified")
-
-        if (!validateField(fieldName, fieldAlias))
-            throw RuntimeException("Invalid query: incorrect field identifier: '$fieldAlias: $fieldName'")
+        val marker = "$fieldName${arguments.toList().renderArguments()}"
+            .withAlias(fieldAlias)
 
         return "$indent$marker {\n" +
-                requestedFields.joinToString(separator = "") { it.renderIndented("$indent  ") } +
+                requestedChildren.joinToString(separator = "") { it.render("$indent  ") } +
                 "$indent}\n"
+    }
+
+    override fun validate() {
+        if (requestedChildren.isEmpty())
+            throw QueryValidationException("No subfields of '$fieldAlias: $fieldName' specified")
+
+        if (!nameValid(fieldName))
+            throw QueryValidationException("Incorrect field name: '$fieldName'")
+
+        if (!nameValidOrEmpty(fieldAlias))
+            throw QueryValidationException("Incorrect field alias: '$fieldAlias'")
+
+        requestedChildren.filterIsInstance<Field>().apply {
+            forEachIndexed { i, field ->
+                // for each field
+                subList(i + 1, size).filter {
+                    // check every next field
+                    field.fieldName == it.fieldName &&
+                            field.fieldAlias == it.fieldAlias
+                }.forEach {
+                    throw QueryValidationException(
+                        "Found fields with same name and alias: '${it.fieldAlias}: ${it.fieldName}'"
+                    )
+                }
+            }
+        }
     }
 }
 
