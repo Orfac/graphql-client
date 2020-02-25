@@ -1,8 +1,9 @@
-package software.graphql.client.structureArguments
+package software.graphql.client.features
 
 import org.junit.Test
 import software.graphql.client.flatten
 import software.graphql.client.getTestResource
+import software.graphql.client.query
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull

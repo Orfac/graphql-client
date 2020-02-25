@@ -3,9 +3,8 @@ package software.graphql.client
 class ScalarField(
     private val fieldName: String,
     private val fieldAlias: String = "",
-    private vararg val arguments: Argument<*>
-) : Field(fieldName, fieldAlias, *arguments) {
-
+    private val arguments: Collection<Argument<*>> = emptyList()
+) : Field(fieldName, fieldAlias, arguments) {
     override fun renderIndented(indent: String): String {
         val marker = "$fieldName${arguments.toList().renderArguments()}"
             .withAlias(fieldAlias)
@@ -21,5 +20,5 @@ class ScalarField(
     }
 }
 
-fun Field.initScalarField(fieldName: String, alias: String, vararg arguments: Argument<*>) =
-    ScalarField(fieldName, alias, *arguments).also { addChild(it) }
+fun Field.initScalarField(fieldName: String, alias: String, arguments: Collection<Argument<*>> = emptyList()) =
+    ScalarField(fieldName, alias, arguments).also { addChild(it) }

@@ -1,0 +1,1 @@
+query { person { ... on Person { name age } } }
