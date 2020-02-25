@@ -3,10 +3,9 @@ package software.graphql.client
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.jvmName
 
-object GraphQL {
-    fun buildQuery(someObject : KClass<*>) : String{
+object QueryBuilder {
+    fun build(someObject : KClass<*>) : String{
         if (someObject.memberProperties.isEmpty()){
             throw IllegalArgumentException("There are no properties for a given class")
         }
@@ -25,7 +24,7 @@ object GraphQL {
 
     private fun buildProperty(prop: KProperty1<out Any, Any?>): String {
         return if (!isPrimitiveType(prop))
-            buildQuery(prop.returnType.classifier as KClass<*>)
+            build(prop.returnType.classifier as KClass<*>)
             else prop.name
     }
 

@@ -4,7 +4,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class GraphQLTest {
+class QueryBuilderTest {
 
 
     @Test
@@ -13,7 +13,7 @@ class GraphQLTest {
 
         assertEquals(
             getTestQuery("product_with_id_and_name"),
-            GraphQL.buildQuery(product::class)
+            QueryBuilder.build(product::class)
         )
     }
 
@@ -23,7 +23,7 @@ class GraphQLTest {
     fun `building query throws an exception for a class with no properties`() {
         class product
         assertFailsWith<IllegalArgumentException> {
-            GraphQL.buildQuery(product::class)
+            QueryBuilder.build(product::class)
         }
     }
 
@@ -34,7 +34,7 @@ class GraphQLTest {
 
         assertEquals(
             getTestQuery("product_with_sub_product"),
-            GraphQL.buildQuery(product::class)
+            QueryBuilder.build(product::class)
         )
     }
 
@@ -46,7 +46,7 @@ class GraphQLTest {
 
         assertEquals(
             getTestQuery("product_with_sub_products"),
-            GraphQL.buildQuery(product::class)
+            QueryBuilder.build(product::class)
         )
     }
 }
