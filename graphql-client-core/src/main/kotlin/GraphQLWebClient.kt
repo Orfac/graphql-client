@@ -1,3 +1,3 @@
 interface GraphQLWebClient {
-    fun send(request: String): String
+    fun send(url : String, request: String): String
 }
