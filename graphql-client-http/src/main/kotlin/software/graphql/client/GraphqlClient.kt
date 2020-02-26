@@ -18,4 +18,7 @@ class GraphqlClient(val httpSender: HttpSender, val jsonReader: JsonObjectReader
 }
 
 // Newline characters may not be recognized by server
-fun Query.createRequest() = "{\"query\": \"${render()}\"}".flatten()
+fun Query.createRequest() = "{\"query\": \"${render().escape()}\"}"
+    .flatten()
+
+private fun String.escape() = replace("\"", "\\\"")

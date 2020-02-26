@@ -1,7 +1,8 @@
 package software.graphql.client
 
 import reactor.core.publisher.Mono
-import reactor.netty.ByteBufFlux
+import reactor.netty.NettyOutbound
+import reactor.netty.http.client.HttpClientRequest
 import java.util.concurrent.CompletableFuture
 
 object NettyHttpSender : HttpSender {
@@ -10,7 +11,10 @@ object NettyHttpSender : HttpSender {
             .create()
             .post()
             .uri(uri)
-            .send(ByteBufFlux.fromString(Mono.just(body)))
+            .send { req: HttpClientRequest?, outbound: NettyOutbound? ->
+                req?.header("Content-Type", "application/json")
+                outbound?.sendString(Mono.just(body))
+            }
             .responseContent()
             .aggregate()
             .asString()
