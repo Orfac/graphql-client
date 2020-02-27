@@ -1,10 +1,13 @@
-package software.graphql.client
+package software.graphql.client.structureArguments
 
 import org.junit.Test
+import software.graphql.client.flatten
+import software.graphql.client.getTestResource
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertNotNull
 
-internal class PersonBookStructureTest {
+internal class StructureTest {
     @Test
     fun `throws an exception when no subfields specified`() {
         assertFails {
@@ -19,6 +22,31 @@ internal class PersonBookStructureTest {
         assertFails {
             query { book { author { } } }.render()
         }
+    }
+
+    @Test
+    fun `throws an exception when contains subfields with same name and alias`() {
+        assertFails {
+            query {
+                book(alias = "book") { title() }
+                book(alias = "book") { author { name() } }
+            }.render()
+        }
+        assertFails {
+            query {
+                book { title() }
+                book { author { name() } }
+            }.render()
+        }
+
+        assertNotNull(
+            kotlin.runCatching {
+                query {
+                    book { title() }
+                    book(alias = "book") { author { name() } }
+                }.render()
+            }.getOrNull()
+        )
     }
 
     @Test

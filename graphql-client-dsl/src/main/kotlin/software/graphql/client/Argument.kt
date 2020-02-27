@@ -1,7 +1,13 @@
 package software.graphql.client
 
-data class Argument<T>(private val name: String, val value: T?, val defaultValue: T? = null) {
-    internal fun render() = "$name: ${renderValue(value)}"
+data class Argument<T>(private val name: String, internal val value: T, internal val defaultValue: T? = null) :
+    RenderableEntry() {
+    override fun renderIndented(indent: String) = "$name: ${renderValue(value)}"
+
+    override fun validate() {
+        if (!nameValid(name))
+            throw QueryValidationException("Incorrect argument name: '$name'")
+    }
 }
 
 private fun renderValue(data: Any?): String = when (data) {
@@ -13,7 +19,7 @@ private fun renderValue(data: Any?): String = when (data) {
 internal fun Collection<Argument<*>>.renderArguments() =
     filter { it.value != it.defaultValue }
         .takeIf { it.isNotEmpty() }
-        ?.map(Argument<*>::render)
+        ?.map { it.render() }
         ?.joinToString(prefix = "(", postfix = ")") { it }
         ?: ""
 

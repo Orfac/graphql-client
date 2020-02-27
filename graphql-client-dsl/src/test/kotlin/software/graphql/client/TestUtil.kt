@@ -1,5 +1,6 @@
 package software.graphql.client
 
+import software.graphql.client.structureArguments.ArgumentsTest
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -11,7 +12,7 @@ internal fun String.flatten() =
         .replace(Regex(" +"), " ")
         .trim()
 
-internal fun getTestResource(fileName: String) = PersonBookArgumentsTest::class.java
-    .getResourceAsStream(fileName)
+internal fun getTestResource(fileName: String) = ArgumentsTest::class.java
+    .getResourceAsStream("/test$fileName")
     .let { BufferedReader(InputStreamReader(it)) }
     .readText()
