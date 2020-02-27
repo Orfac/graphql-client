@@ -1,4 +1,6 @@
-class GraphQLClient(
+package core
+
+open class GraphQLClient(
     val url: String,
     var webClient: GraphQLWebClient,
     var jsonConverter: GraphQLJsonConverter

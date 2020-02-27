@@ -16,3 +16,4 @@ pluginManagement {
 include("graphql-client-core")
 include("graphql-client-dsl")
 include("graphql-client-annotations")
+include("graphql-client-default")
