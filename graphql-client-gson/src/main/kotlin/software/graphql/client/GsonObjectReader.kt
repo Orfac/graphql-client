@@ -3,6 +3,8 @@ package software.graphql.client
 import com.google.gson.Gson
 
 object GsonObjectReader : JsonObjectReader {
-    override fun <T> readObject(json: String, valueType: Class<T>): T =
-        Gson().fromJson(json, valueType)
+    private val gson = Gson()
+
+    override fun <T : Any> readObject(json: String, valueType: Class<out T>): T =
+        gson.fromJson(json, valueType)
 }

@@ -7,9 +7,9 @@ repositories {
 }
 
 dependencies {
-    testCompile(project(":graphql-client-dsl"))
-    testCompile(project(":graphql-client-jackson"))
-    testCompile(project(":graphql-client-gson"))
+    testImplementation(project(":graphql-client-dsl"))
+    testImplementation(project(":graphql-client-jackson"))
+    testImplementation(project(":graphql-client-gson"))
 
     testImplementation(kotlin("test"))
     testImplementation(kotlin("test-junit"))
