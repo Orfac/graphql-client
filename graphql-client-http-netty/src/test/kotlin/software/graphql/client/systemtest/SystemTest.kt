@@ -25,7 +25,7 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - jackson`() {
         assertEquals(
             data,
-            sendQuery(JacksonObjectReader)
+            sendQuery(JacksonObjectReader).data
         )
     }
 
@@ -33,12 +33,12 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - gson`() {
         assertEquals(
             data,
-            sendQuery(GsonObjectReader)
+            sendQuery(GsonObjectReader).data
         )
     }
 }
 
-private fun sendQuery(jsonObjectReader: JsonObjectReader): Data {
+private fun sendQuery(jsonObjectReader: JsonObjectReader): Response {
     val query = query {
         country(code = "RU") {
             name()
@@ -54,12 +54,11 @@ private fun sendQuery(jsonObjectReader: JsonObjectReader): Data {
         }
     }
 
-    return GraphqlClient(
+    return GraphQLClient(
         NettyHttpSender,
         jsonObjectReader
     )
         .uri(COUNTRIES_GRAPHQL_URL)
         .sendQuery<Response>(query)
         .get(20, TimeUnit.SECONDS)
-        .data!!
 }

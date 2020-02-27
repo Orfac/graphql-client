@@ -1,20 +1,19 @@
 package software.graphql.client
 
+import io.netty.handler.codec.http.HttpHeaders
 import reactor.core.publisher.Mono
-import reactor.netty.NettyOutbound
-import reactor.netty.http.client.HttpClientRequest
+import reactor.netty.ByteBufFlux
+import reactor.netty.http.client.HttpClient
 import java.util.concurrent.CompletableFuture
 
 object NettyHttpSender : HttpSender {
+    private val client = HttpClient.create()
+        .headers { t: HttpHeaders? -> t?.add("Content-Type", "application/json") }
+
     override fun send(uri: String, body: String): CompletableFuture<String> =
-        reactor.netty.http.client.HttpClient
-            .create()
-            .post()
+        client.post()
             .uri(uri)
-            .send { req: HttpClientRequest?, outbound: NettyOutbound? ->
-                req?.header("Content-Type", "application/json")
-                outbound?.sendString(Mono.just(body))
-            }
+            .send(ByteBufFlux.fromString(Mono.just(body)))
             .responseContent()
             .aggregate()
             .asString()
