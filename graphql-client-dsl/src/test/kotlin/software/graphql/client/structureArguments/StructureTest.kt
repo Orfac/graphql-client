@@ -5,7 +5,7 @@ import software.graphql.client.flatten
 import software.graphql.client.getTestResource
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
-import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 
 internal class StructureTest {
     @Test
@@ -39,14 +39,14 @@ internal class StructureTest {
             }.render()
         }
 
-        class MyException : RuntimeException()
-        assertFailsWith<MyException> {
-            query {
-                book { title() }
-                book(alias = "book") { author { name() } }
-            }.render()
-            throw MyException()
-        }
+        assertNotNull(
+            kotlin.runCatching {
+                query {
+                    book { title() }
+                    book(alias = "book") { author { name() } }
+                }.render()
+            }.getOrNull()
+        )
     }
 
     @Test
