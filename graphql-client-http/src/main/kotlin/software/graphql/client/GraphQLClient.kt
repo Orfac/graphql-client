@@ -10,13 +10,16 @@ class GraphQLClient(val httpSender: HttpSender, val jsonReader: JsonObjectReader
         return this
     }
 
-    // Query as argument, because it's GraphqlClient, not just Http
-    // D - data, E - errors, X - extensions
-    inline fun <reified T : GraphQLResponse> sendQuery(query: Query): CompletableFuture<T> =
-        httpSender.send(uri, query.createRequest())
-            .thenApplyAsync {
-                jsonReader.readObject(it, T::class.java)
-            }
+    // Query as argument, because it's GraphQLClient, not just Http
+    inline fun <reified T : GraphQLResponse> sendQuery(query: Query): GraphQLCallback<T> =
+        GraphQLCallback(httpSender.send(uri, query.createRequest()),
+            { jsonReader.readObject(it, T::class.java) })
+}
+
+class GraphQLCallback<T : GraphQLResponse>(val jsonCallback: () -> String, val responseCallback: (String) -> T?) {
+    fun asCompletableFuture(): CompletableFuture<T?> =
+        CompletableFuture.supplyAsync(jsonCallback)
+            .thenApplyAsync(responseCallback)
 }
 
 interface GraphQLResponse {

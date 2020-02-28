@@ -1,9 +1,10 @@
 package software.graphql.client
 
-import java.util.concurrent.CompletableFuture
-
 interface HttpSender {
-    fun send(uri: String, body: String): CompletableFuture<String>
+    /**
+     * Should return a callback that can be wrapped up with CompletableFuture or something alike.
+     */
+    fun send(uri: String, body: String): () -> String
 }
 
 class RequestFailedException(message: String) : RuntimeException("Request failed: $message")
