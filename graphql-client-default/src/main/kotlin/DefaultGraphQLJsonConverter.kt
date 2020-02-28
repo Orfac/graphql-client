@@ -12,7 +12,7 @@ class DefaultGraphQLJsonConverter : GraphQLJsonConverter {
 
     override fun <T> deserializeReactive(jsonString: Mono<String>, classInfo: Class<T>): Mono<T> {
         return Mono.just(
-            ObjectMapper().readValue(jsonString.block(), classInfo)
+            mapper.readValue(jsonString.block(), classInfo)
         )
     }
 }
