@@ -1,15 +1,12 @@
 package software.graphql.client.systemtest
 
-import software.graphql.client.GraphQLResponse
-import software.graphql.client.PlainTextGraphQLError
-
 // All properties are nullable vars with default values to ease the construction of data by json-parsing tools
 // Actually, for jackson it would be enough to provide default values, and gson doesn't need that at all
-internal data class Response(
-    override val data: Data? = null,
-    override val errors: Collection<PlainTextGraphQLError>? = null,
-    override val extensions: Nothing? = null
-) : GraphQLResponse
+//internal data class Response(
+//    override val data: Data? = null,
+//    override val errors: Collection<PlainTextGraphQLError>? = null,
+//    override val extensions: Nothing? = null
+//) : GraphQLResponse
 
 internal data class Data(var country: CountryData? = null)
 

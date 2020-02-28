@@ -1,7 +1,5 @@
 package software.graphql.client
 
-import java.util.concurrent.CompletableFuture
-
 class GraphQLClient(val httpSender: HttpSender, val jsonReader: JsonObjectReader) {
     var uri: String = "http://127.0.0.1"
 
@@ -11,22 +9,21 @@ class GraphQLClient(val httpSender: HttpSender, val jsonReader: JsonObjectReader
     }
 
     // Query as argument, because it's GraphQLClient, not just Http
-    inline fun <reified T : GraphQLResponse> sendQuery(query: Query): GraphQLCallback<T> =
-        GraphQLCallback(httpSender.send(uri, query.createRequest()),
-            { jsonReader.readObject(it, T::class.java) })
+    inline fun <reified T> sendQuery(query: Query): GraphQLCallback<GraphQLResponse<T>> {
+        return GraphQLCallback(httpSender.send(uri, query.createRequest()),
+            { jsonReader.readObject(it, GraphQLResponse<T>()::class.java) })
+    }
 }
 
-class GraphQLCallback<T : GraphQLResponse>(val jsonCallback: () -> String, val responseCallback: (String) -> T?) {
-    fun asCompletableFuture(): CompletableFuture<T?> =
-        CompletableFuture.supplyAsync(jsonCallback)
-            .thenApplyAsync(responseCallback)
+class GraphQLCallback<T : GraphQLResponse<*>>(val jsonCallback: () -> String, val responseCallback: (String) -> T) {
+    fun call(): T = responseCallback(jsonCallback())
 }
 
-interface GraphQLResponse {
-    val data: Any?
-    val errors: Collection<GraphQLError>?
-    val extensions: Any?
-}
+open class GraphQLResponse<T>(
+    val data: T? = null,
+    val errors: Collection<GraphQLError>? = null,
+    val extensions: Any? = null
+)
 
 interface GraphQLError {
     val message: String
