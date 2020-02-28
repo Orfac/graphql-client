@@ -1,8 +1,6 @@
 
 rootProject.name = "graphql-client"
 
-include("graphql-client-dsl")
-include("graphql-client-annotations")
 
 val kotlinVersion: String by settings
 
@@ -15,3 +13,7 @@ pluginManagement {
         }
     }
 }
+include("graphql-client-core")
+include("graphql-client-dsl")
+include("graphql-client-annotations")
+include("graphql-client-default")
