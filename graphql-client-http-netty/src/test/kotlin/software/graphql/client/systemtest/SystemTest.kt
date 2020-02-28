@@ -2,6 +2,7 @@ package software.graphql.client.systemtest
 
 import org.junit.Test
 import software.graphql.client.*
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 
@@ -22,23 +23,51 @@ internal class SystemTest {
         )
 
     @Test
-    fun `queries from dsl are sent and treated correctly - jackson`() {
+    fun `queries from dsl are sent and treated correctly - jackson, CompletableFuture`() {
         assertEquals(
             data,
-            sendQuery(JacksonObjectReader).data
+            sendQuery(JacksonObjectReader)
+                .asCompletableFuture()
+                .get(10, TimeUnit.SECONDS)!!
+                .data
         )
     }
 
     @Test
-    fun `queries from dsl are sent and treated correctly - gson`() {
+    fun `queries from dsl are sent and treated correctly - jackson, Mono`() {
         assertEquals(
             data,
-            sendQuery(GsonObjectReader).data
+            sendQuery(JacksonObjectReader)
+                .asMono()
+                .block(Duration.ofSeconds(10))!!
+                .data
+        )
+    }
+
+    @Test
+    fun `queries from dsl are sent and treated correctly - gson, CompletableFuture`() {
+        assertEquals(
+            data,
+            sendQuery(GsonObjectReader)
+                .asCompletableFuture()
+                .get(10, TimeUnit.SECONDS)!!
+                .data
+        )
+    }
+
+    @Test
+    fun `queries from dsl are sent and treated correctly - gson, Mono`() {
+        assertEquals(
+            data,
+            sendQuery(GsonObjectReader)
+                .asMono()
+                .block(Duration.ofSeconds(10))!!
+                .data
         )
     }
 }
 
-private fun sendQuery(jsonObjectReader: JsonObjectReader): Response {
+private fun sendQuery(jsonObjectReader: JsonObjectReader): GraphQLCallback<Response> {
     val query = query {
         country(code = "RU") {
             name()
@@ -59,6 +88,5 @@ private fun sendQuery(jsonObjectReader: JsonObjectReader): Response {
         jsonObjectReader
     )
         .uri(COUNTRIES_GRAPHQL_URL)
-        .sendQuery<Response>(query)
-        .get(20, TimeUnit.SECONDS)
+        .sendQuery(query)
 }

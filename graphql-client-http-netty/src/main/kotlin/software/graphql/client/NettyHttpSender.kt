@@ -4,13 +4,12 @@ import io.netty.handler.codec.http.HttpHeaders
 import reactor.core.publisher.Mono
 import reactor.netty.ByteBufFlux
 import reactor.netty.http.client.HttpClient
-import java.util.concurrent.CompletableFuture
 
 object NettyHttpSender : HttpSender {
     private val client = HttpClient.create()
         .headers { t: HttpHeaders? -> t?.add("Content-Type", "application/json") }
 
-    override fun send(uri: String, body: String): CompletableFuture<String> =
+    override fun send(uri: String, body: String): () -> String = {
         client.post()
             .uri(uri)
             .send(ByteBufFlux.fromString(Mono.just(body)))
@@ -18,8 +17,11 @@ object NettyHttpSender : HttpSender {
             .aggregate()
             .asString()
             .`as` {
-                CompletableFuture.supplyAsync {
-                    it.block() ?: throw RequestFailedException("Could not receive data from: '$uri'")
-                }
+                it.block() ?: throw RequestFailedException("Could not receive data from: '$uri'")
             }
+    }
 }
+
+fun <T : GraphQLResponse> GraphQLCallback<T>.asMono(): Mono<T> =
+    Mono.fromCallable(jsonCallback)
+        .map(responseCallback)
