@@ -1,8 +1,18 @@
 import com.fasterxml.jackson.databind.ObjectMapper
 import core.GraphQLJsonConverter
+import reactor.core.publisher.Mono
+
 
 class DefaultGraphQLJsonConverter : GraphQLJsonConverter {
+    val mapper: ObjectMapper = ObjectMapper().findAndRegisterModules()
+
     override fun <T> deserialize(jsonString: String, classInfo: Class<T>): T {
-        return ObjectMapper().readValue(jsonString, classInfo)
+        return mapper.readValue(jsonString, classInfo)
+    }
+
+    override fun <T> deserializeReactive(jsonString: Mono<String>, classInfo: Class<T>): Mono<T> {
+        return Mono.just(
+            ObjectMapper().readValue(jsonString.block(), classInfo)
+        )
     }
 }
