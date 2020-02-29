@@ -3,7 +3,6 @@ package software.graphql.client.systemtest
 import org.junit.Test
 import software.graphql.client.*
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 
 private const val COUNTRIES_GRAPHQL_URL = "https://countries.trevorblades.com/"
@@ -23,34 +22,12 @@ internal class SystemTest {
         )
 
     @Test
-    fun `queries from dsl are sent and treated correctly - jackson, CompletableFuture`() {
-        assertEquals(
-            data,
-            sendQuery(JacksonObjectReader)
-                .asCompletableFuture()
-                .get(10, TimeUnit.SECONDS)!!
-                .data
-        )
-    }
-
-    @Test
     fun `queries from dsl are sent and treated correctly - jackson, Mono`() {
         assertEquals(
             data,
-            sendQuery(JacksonObjectReader)
+            sendQuery<Data>(JacksonObjectReader, jacksonType())
                 .asMono()
                 .block(Duration.ofSeconds(10))!!
-                .data
-        )
-    }
-
-    @Test
-    fun `queries from dsl are sent and treated correctly - gson, CompletableFuture`() {
-        assertEquals(
-            data,
-            sendQuery(GsonObjectReader)
-                .asCompletableFuture()
-                .get(10, TimeUnit.SECONDS)!!
                 .data
         )
     }
@@ -59,15 +36,34 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - gson, Mono`() {
         assertEquals(
             data,
-            sendQuery(GsonObjectReader)
+            sendQuery<Data>(GsonObjectReader, gsonType())
                 .asMono()
                 .block(Duration.ofSeconds(10))!!
                 .data
         )
     }
+
+    @Test
+    fun `queries from dsl are sent and treated correctly - gson, blocking`() {
+        assertEquals(
+            data,
+            sendQuery<Data>(GsonObjectReader, gsonType()).call().data
+        )
+    }
+
+    @Test
+    fun `queries from dsl are sent and treated correctly - jackson, blocking`() {
+        assertEquals(
+            data,
+            sendQuery<Data>(JacksonObjectReader, jacksonType()).call().data//.call().data
+        )
+    }
 }
 
-private fun sendQuery(jsonObjectReader: JsonObjectReader): GraphQLCallback<Response> {
+private inline fun <reified T : Any> sendQuery(
+    jsonObjectReader: JsonObjectReader,
+    jsonTypeResolver: TypeResolver<GraphQLResponse<T>>
+): Callback<GraphQLResponse<T>> {
     val query = query {
         country(code = "RU") {
             name()
@@ -88,5 +84,5 @@ private fun sendQuery(jsonObjectReader: JsonObjectReader): GraphQLCallback<Respo
         jsonObjectReader
     )
         .uri(COUNTRIES_GRAPHQL_URL)
-        .sendQuery(query)
+        .sendQuery(query, jsonTypeResolver)
 }
