@@ -1,13 +1,13 @@
 package software.graphql.client
 
-import io.netty.handler.codec.http.HttpHeaders
+import io.netty.handler.codec.http.HttpHeaderNames
 import reactor.core.publisher.Mono
 import reactor.netty.ByteBufFlux
 import reactor.netty.http.client.HttpClient
 
 object NettyHttpSender : HttpSender {
     private val client = HttpClient.create()
-        .headers { t: HttpHeaders? -> t?.add("Content-Type", "application/json") }
+        .headers { it[HttpHeaderNames.CONTENT_TYPE] = "application/json" }
 
     override fun send(uri: String, body: String): () -> String = {
         client.post()
@@ -22,6 +22,4 @@ object NettyHttpSender : HttpSender {
     }
 }
 
-fun <T : GraphQLResponse> GraphQLCallback<T>.asMono(): Mono<T> =
-    Mono.fromCallable(jsonCallback)
-        .map(responseCallback)
+fun <T : Any?> Callback<T>.asMono(): Mono<T> = Mono.fromCallable(this)
