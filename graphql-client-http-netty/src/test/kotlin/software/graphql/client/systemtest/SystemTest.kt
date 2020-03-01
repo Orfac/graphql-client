@@ -58,6 +58,17 @@ internal class SystemTest {
             sendQuery<Data>(JacksonObjectReader, jacksonType()).call().data//.call().data
         )
     }
+
+    @Test
+    fun `context of Mono is saved`() {
+        sendQuery<Data>(
+            JacksonObjectReader,
+            jacksonType()
+        ).asMono()
+            .subscriberContext { it.put(CONTEXT_TEST_KEY, CONTEXT_TEST_VALUE) }
+            .subscriberContext { it.put(CONTEXT_TEST_ENABLED, true) }
+            .block()
+    }
 }
 
 private inline fun <reified T : Any> sendQuery(
@@ -79,10 +90,7 @@ private inline fun <reified T : Any> sendQuery(
         }
     }
 
-    return GraphQLClient(
-        NettyHttpSender,
-        jsonObjectReader
-    )
+    return NettyGraphQLClient(jsonObjectReader)
         .uri(COUNTRIES_GRAPHQL_URL)
         .sendQuery(query, jsonTypeResolver)
 }
