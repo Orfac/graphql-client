@@ -3,7 +3,13 @@ package software.graphql.client.systemtest
 import software.graphql.client.*
 
 internal fun Query.country(code: String, fieldAlias: String = "", init: Country.() -> Unit) =
-    initField(Country("country", fieldAlias, listOf(Argument("code", code))), init)
+    initField(
+        Country(
+            "country",
+            fieldAlias,
+            listOf(Argument("code", code))
+        ), init
+    )
 
 internal class Country(fieldName: String, fieldAlias: String = "", arguments: Collection<Argument<*>> = emptyList()) :
     Field(fieldName, fieldAlias, arguments) {

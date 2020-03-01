@@ -2,6 +2,7 @@ package software.graphql.client.systemtest
 
 import org.junit.Test
 import software.graphql.client.*
+import software.graphql.client.netty.*
 import java.time.Duration
 import kotlin.test.assertEquals
 
@@ -25,8 +26,10 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - jackson, Mono`() {
         assertEquals(
             data,
-            sendQuery<Data>(JacksonObjectReader, jacksonType())
-                .asMono()
+            sendQuery<Data>(
+                JacksonObjectReader,
+                jacksonType()
+            ).asMono()
                 .block(Duration.ofSeconds(10))!!
                 .data
         )
@@ -36,8 +39,10 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - gson, Mono`() {
         assertEquals(
             data,
-            sendQuery<Data>(GsonObjectReader, gsonType())
-                .asMono()
+            sendQuery<Data>(
+                GsonObjectReader,
+                gsonType()
+            ).asMono()
                 .block(Duration.ofSeconds(10))!!
                 .data
         )
@@ -47,7 +52,10 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - gson, blocking`() {
         assertEquals(
             data,
-            sendQuery<Data>(GsonObjectReader, gsonType()).call().data
+            sendQuery<Data>(
+                GsonObjectReader,
+                gsonType()
+            ).call().data
         )
     }
 
@@ -55,8 +63,22 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - jackson, blocking`() {
         assertEquals(
             data,
-            sendQuery<Data>(JacksonObjectReader, jacksonType()).call().data//.call().data
+            sendQuery<Data>(
+                JacksonObjectReader,
+                jacksonType()
+            ).call().data
         )
+    }
+
+    @Test
+    fun `context of Mono is saved`() {
+        sendQuery<Data>(
+            JacksonObjectReader,
+            jacksonType()
+        ).asMono()
+            .subscriberContext { it.put(CONTEXT_TEST_KEY, CONTEXT_TEST_VALUE) }
+            .subscriberContext { it.put(CONTEXT_TEST_ENABLED, true) }
+            .block()
     }
 }
 

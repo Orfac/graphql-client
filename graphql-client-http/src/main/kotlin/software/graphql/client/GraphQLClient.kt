@@ -1,5 +1,9 @@
 package software.graphql.client
 
+import software.graphql.client.netty.NettyHttpSender
+import software.graphql.client.netty.addLast
+import software.graphql.client.netty.responses
+
 class GraphQLClient(private val httpSender: HttpSender, private val jsonReader: JsonObjectReader) {
     private var uri: String = "http://127.0.0.1"
 
@@ -9,32 +13,40 @@ class GraphQLClient(private val httpSender: HttpSender, private val jsonReader: 
     }
 
     // Query as argument, because it's GraphQLClient, not just Http
-    fun <T : Any> sendQuery(query: Query, dataType: TypeResolver<GraphQLResponse<T>>): Callback<GraphQLResponse<T>> = {
-        jsonReader.readObject(
-            httpSender.send(uri, query.createRequest())(),
-            dataType
-        )
+    fun <T : Any> sendQuery(query: Query, dataType: TypeResolver<GraphQLResponse<T>>): Callback<GraphQLResponse<T>> {
+        if (httpSender is NettyHttpSender) {
+            val responseMono = httpSender.sendMono(uri, query.createRequest())
+                .map { json ->
+                    jsonReader.readObject(json, dataType)
+                }
+            val id = responses.addLast(responseMono)
+
+            return Callback(id, httpSender.callbackFromMono(responseMono, uri))
+        }
+
+        return Callback {
+            jsonReader.readObject(
+                httpSender.send(uri, query.createRequest())(),
+                dataType
+            )
+        }
     }
 }
 
-typealias Callback<T> = () -> T
+internal const val NO_ID = -1
 
-fun <T : Any?> Callback<T>.call() = this()
+class Callback<T>(private val callback: () -> T) {
+    internal var id: Int = NO_ID
 
-data class GraphQLResponse<T>(
-    val data: T? = null,
-    val errors: Collection<PlainTextGraphQLError>? = null,
-    val extensions: Any? = null
-)
+    internal constructor(id: Int, callback: () -> T) : this(callback) {
+        this.id = id
+    }
 
-interface GraphQLError {
-    val message: String
+    fun call() = callback()
 }
 
-data class PlainTextGraphQLError(override val message: String) : GraphQLError
-
 // Newline characters may not be recognized by server
-fun Query.createRequest() = "{\"query\": \"${render().escape()}\"}"
+private fun Query.createRequest() = "{\"query\": \"${render().escape()}\"}"
     .flatten()
 
 private fun String.escape() = replace("\"", "\\\"")
