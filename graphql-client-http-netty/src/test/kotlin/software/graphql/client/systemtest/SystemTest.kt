@@ -25,7 +25,7 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - jackson, Mono`() {
         assertEquals(
             data,
-            sendQuery<Data>(JacksonObjectReader, jacksonType())
+            sendQuery(JacksonObjectReader, jacksonType())
                 .asMono()
                 .block(Duration.ofSeconds(10))!!
                 .data
@@ -36,7 +36,7 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - gson, Mono`() {
         assertEquals(
             data,
-            sendQuery<Data>(GsonObjectReader, gsonType())
+            sendQuery(GsonObjectReader, gsonType())
                 .asMono()
                 .block(Duration.ofSeconds(10))!!
                 .data
@@ -47,7 +47,7 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - gson, blocking`() {
         assertEquals(
             data,
-            sendQuery<Data>(GsonObjectReader, gsonType()).call().data
+            sendQuery(GsonObjectReader, gsonType()).call().data
         )
     }
 
@@ -55,13 +55,13 @@ internal class SystemTest {
     fun `queries from dsl are sent and treated correctly - jackson, blocking`() {
         assertEquals(
             data,
-            sendQuery<Data>(JacksonObjectReader, jacksonType()).call().data//.call().data
+            sendQuery(JacksonObjectReader, jacksonType()).call().data//.call().data
         )
     }
 
     @Test
     fun `context of Mono is saved`() {
-        sendQuery<Data>(
+        sendQuery(
             JacksonObjectReader,
             jacksonType()
         ).asMono()
@@ -71,10 +71,10 @@ internal class SystemTest {
     }
 }
 
-private inline fun <reified T : Any> sendQuery(
+private fun sendQuery(
     jsonObjectReader: JsonObjectReader,
-    jsonTypeResolver: TypeResolver<GraphQLResponse<T>>
-): Callback<GraphQLResponse<T>> {
+    jsonTypeResolver: TypeResolver<GraphQLResponse<Data, PlainTextGraphQLError>>
+): Callback<GraphQLResponse<Data, PlainTextGraphQLError>> {
     val query = query {
         country(code = "RU") {
             name()

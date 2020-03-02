@@ -26,7 +26,7 @@ object NettyHttpSender : HttpSender {
             .subscriberContext {
                 // adding context test
                 it.also {
-                    if (!it.isEmpty && it.get<Boolean>(CONTEXT_TEST_ENABLED) == true)
+                    if (it.getOrDefault(CONTEXT_TEST_ENABLED, false) == true)
                         assert(CONTEXT_TEST_VALUE == it[CONTEXT_TEST_KEY])
                 }
             }

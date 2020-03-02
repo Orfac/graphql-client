@@ -2,6 +2,8 @@ package software.graphql.client.features
 
 import org.junit.Test
 import software.graphql.client.*
+import software.graphql.client.example.Person
+import software.graphql.client.example.person
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 

@@ -7,4 +7,4 @@ interface HttpSender {
     fun send(uri: String, body: String): () -> String
 }
 
-class RequestFailedException(message: String) : RuntimeException("Request failed: $message")
+class GraphQLRequestFailedException(message: String) : RuntimeException("GraphQL request failed: $message")

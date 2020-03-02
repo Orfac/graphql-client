@@ -3,6 +3,13 @@ package software.graphql.client
 @DslMarker
 annotation class FieldMarker
 
+/**
+ * This class represents complex fields, containing other fields inside itself. Create your complex fields
+ * extending this class and defining field-functions inside it using methods
+ * [software.graphql.client.initField] and [software.graphql.client.initScalarField].
+ *
+ * See an example in [software.graphql.client.example] package.
+ */
 @FieldMarker
 abstract class Field(
     private val fieldName: String,
@@ -16,9 +23,6 @@ abstract class Field(
         requestedChildren += child
     }
 
-    protected fun <T : Field> initField(field: T, init: T.() -> Unit) =
-        field.apply(init)
-            .also { addChild(it) }
     internal fun childrenRequested() = requestedChildren.isNotEmpty()
 
     override fun renderIndented(indent: String): String {
