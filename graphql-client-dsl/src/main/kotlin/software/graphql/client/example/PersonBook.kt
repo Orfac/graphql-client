@@ -1,4 +1,4 @@
-package software.graphql.client.features
+package software.graphql.client.example
 
 import software.graphql.client.*
 

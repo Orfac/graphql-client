@@ -1,6 +1,9 @@
 package software.graphql.client.features
 
 import org.junit.Test
+import software.graphql.client.example.book
+import software.graphql.client.example.person
+import software.graphql.client.example.version
 import software.graphql.client.flatten
 import software.graphql.client.getTestResource
 import software.graphql.client.query

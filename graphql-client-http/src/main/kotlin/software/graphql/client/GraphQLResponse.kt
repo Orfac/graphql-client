@@ -1,8 +1,8 @@
 package software.graphql.client
 
-data class GraphQLResponse<T>(
-    val data: T? = null,
-    val errors: Collection<PlainTextGraphQLError>? = null,
+data class GraphQLResponse<D : Any, E : GraphQLError>(
+    val data: D? = null,
+    val errors: Collection<E>? = null,
     val extensions: Any? = null
 )
 

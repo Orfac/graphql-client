@@ -1,5 +1,10 @@
 package software.graphql.client
 
+/**
+ * Represents a scalar field. Use [initScalarField] function to create such fields.
+ *
+ * See an example in [software.graphql.client.example] package.
+ */
 class ScalarField(
     private val fieldName: String,
     private val fieldAlias: String = "",

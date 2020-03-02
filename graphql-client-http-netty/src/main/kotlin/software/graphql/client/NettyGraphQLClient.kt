@@ -5,14 +5,17 @@ import reactor.core.publisher.Mono
 class NettyGraphQLClient(private val jsonReader: JsonObjectReader) : GraphQLClient {
     private var uri: String = "http://127.0.0.1"
 
-    override fun uri(uri: String) = this.apply {
+    /**
+     * Returns a new NettyGraphQLClient object with same jsonReader and specified uri
+     */
+    override fun uri(uri: String) = NettyGraphQLClient(jsonReader).apply {
         this.uri = uri
     }
 
-    override fun <T : Any> sendQuery(
+    override fun <D : Any, E : GraphQLError> sendQuery(
         query: Query,
-        dataType: TypeResolver<GraphQLResponse<T>>
-    ): Callback<GraphQLResponse<T>> {
+        dataType: TypeResolver<GraphQLResponse<D, E>>
+    ): Callback<GraphQLResponse<D, E>> {
         val responseMono = NettyHttpSender.sendMono(uri, query.createRequest())
             .map { json ->
                 jsonReader.readObject(json, dataType)
@@ -25,6 +28,6 @@ class NettyGraphQLClient(private val jsonReader: JsonObjectReader) : GraphQLClie
 
 internal fun <T> callbackFromMono(mono: Mono<T>, uri: String): () -> T = {
     mono.`as` {
-        it.block() ?: throw RequestFailedException("Could not receive data from: '$uri'")
+        it.block() ?: throw GraphQLRequestFailedException("Could not receive data from: '$uri'")
     }
 }
